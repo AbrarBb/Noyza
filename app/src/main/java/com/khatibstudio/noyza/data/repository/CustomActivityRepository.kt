@@ -21,4 +21,7 @@ class CustomActivityRepository @Inject constructor(
 
     suspend fun deleteCustomActivity(activity: CustomActivityEntity) =
         customActivityDao.deleteCustomActivity(activity)
+
+    suspend fun deleteAllCustomActivities() =
+        customActivityDao.deleteAllCustomActivities()
 }

@@ -180,6 +180,14 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ---
 
+## Quality Assurance & Testing Suite
+
+A complete QA specification containing test cases across all 14 architectural categories (audio capture, FFT psychoacoustics, suitability engine, custom activity profiles, active session, GPS/places, forecasting, history, widget, monetization, onboarding, accessibility, privacy, and cross-cutting regression) is maintained in:
+
+👉 **[QA Test Case Suite](QA_TEST_SUITE.md)**
+
+---
+
 ## Lessons Applied from Cyvia
 - **Global Edge-to-Edge:** Configured via `enableEdgeToEdge()` in `MainActivity` with dynamic window insets.
 - **Dynamic Navigation Chrome:** Bottom navigation bar automatically hides on sub-screens to maximize screen real estate.

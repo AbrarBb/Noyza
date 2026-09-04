@@ -12,13 +12,16 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.khatibstudio.noyza.data.local.entity.toProfile
+import com.khatibstudio.noyza.data.repository.CustomActivityRepository
 import com.khatibstudio.noyza.domain.engine.NoiseForecastingEngine
 import com.khatibstudio.noyza.domain.engine.PlaceScheduleForecast
+import com.khatibstudio.noyza.domain.model.ActivityProfile
 
 data class PlaceDetailUiState(
     val place: Place? = null,
     val samples: List<Float> = emptyList(),
-    val activityCompatibility: Map<ActivityType, Int> = emptyMap(),
+    val activityCompatibility: Map<ActivityProfile, Int> = emptyMap(),
     val scheduleForecast: PlaceScheduleForecast? = null
 )
 
@@ -27,7 +30,8 @@ class PlaceDetailViewModel @Inject constructor(
     private val placeRepository: PlaceRepository,
     private val sessionRepository: SessionRepository,
     private val suitabilityEngine: SuitabilityEngine,
-    private val forecastingEngine: NoiseForecastingEngine
+    private val forecastingEngine: NoiseForecastingEngine,
+    private val customActivityRepository: CustomActivityRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlaceDetailUiState())
@@ -53,7 +57,10 @@ class PlaceDetailViewModel @Inject constructor(
                 val stability = latestSession.stabilityScore
                 val loudTime = latestSession.loudPercent + latestSession.veryLoudPercent
 
-                val compatibility = ActivityType.entries.associate { activity ->
+                val customActivities = customActivityRepository.getAllCustomActivities().first().map { it.toProfile() }
+                val allActivities: List<ActivityProfile> = ActivityType.entries + customActivities
+
+                val compatibility = allActivities.associate { activity ->
                     val result = suitabilityEngine.calculate(
                         activity = activity,
                         averageDb = avg,

@@ -10,6 +10,7 @@ import com.khatibstudio.noyza.data.preferences.NoyZaPreferences
 import com.khatibstudio.noyza.data.repository.PlaceRepository
 import com.khatibstudio.noyza.data.repository.SessionRepository
 import com.khatibstudio.noyza.domain.model.ActivityType
+import com.khatibstudio.noyza.data.repository.CustomActivityRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -30,7 +31,8 @@ data class ProfileUiState(
 class ProfileViewModel @Inject constructor(
     private val preferences: NoyZaPreferences,
     private val sessionRepository: SessionRepository,
-    private val placeRepository: PlaceRepository
+    private val placeRepository: PlaceRepository,
+    private val customActivityRepository: CustomActivityRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -79,6 +81,7 @@ class ProfileViewModel @Inject constructor(
     fun deleteAllData() = viewModelScope.launch {
         sessionRepository.deleteAllData()
         placeRepository.deleteAllPlaces()
+        customActivityRepository.deleteAllCustomActivities()
     }
 
     fun exportCsv(context: Context) = viewModelScope.launch {

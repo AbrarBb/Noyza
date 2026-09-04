@@ -160,8 +160,7 @@ fun PlaceDetailScreen(
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
                     )
                     Spacer(Modifier.height(12.dp))
-                    ActivityType.entries.take(8).forEach { activity ->
-                        val compatScore = uiState.activityCompatibility[activity] ?: 0
+                    uiState.activityCompatibility.forEach { (activity, compatScore) ->
                         val compatState = SuitabilityState.fromScore(compatScore)
                         val compatColor = scoreStateColor(compatState)
                         Row(

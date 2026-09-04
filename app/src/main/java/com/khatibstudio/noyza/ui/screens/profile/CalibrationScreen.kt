@@ -127,18 +127,64 @@ fun CalibrationScreen(
 
             // Quick preset buttons
             Text(
-                "Quick presets",
+                "Quick Presets",
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
             )
             Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(-10f, -5f, 0f, 5f, 10f).forEach { preset ->
-                    OutlinedButton(
-                        onClick = { viewModel.setOffset(preset) },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(if (preset >= 0) "+${preset.toInt()}" else "${preset.toInt()}")
+
+            val namedPresets = listOf(
+                "Factory Default" to 0f,
+                "Quiet Room" to -3f,
+                "Modern Office" to 3f,
+                "Smartphone Mic" to 2f,
+                "Headset" to -4f
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    namedPresets.take(3).forEach { (name, offset) ->
+                        val isSelected = currentOffset == offset
+                        OutlinedButton(
+                            onClick = { viewModel.setOffset(offset) },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f),
+                            colors = if (isSelected) ButtonDefaults.outlinedButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            ) else ButtonDefaults.outlinedButtonColors()
+                        ) {
+                            Text(
+                                name,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            )
+                        }
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    namedPresets.drop(3).forEach { (name, offset) ->
+                        val isSelected = currentOffset == offset
+                        OutlinedButton(
+                            onClick = { viewModel.setOffset(offset) },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f),
+                            colors = if (isSelected) ButtonDefaults.outlinedButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            ) else ButtonDefaults.outlinedButtonColors()
+                        ) {
+                            Text(
+                                name,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            )
+                        }
                     }
                 }
             }

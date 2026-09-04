@@ -104,6 +104,26 @@ class SessionViewModel @Inject constructor(
         startTimer()
     }
 
+    /**
+     * Switch activity mid-session and immediately recalculate suitability
+     * without losing accumulated session data.
+     */
+    fun switchActivity(newActivity: ActivityType) {
+        _uiState.update { current ->
+            val newResult = suitabilityEngine.calculate(
+                activity = newActivity,
+                averageDb = current.averageDb,
+                peakDb = current.peakDb,
+                minimumDb = current.minimumDb,
+                stabilityPercent = current.stabilityPercent,
+                loudTimePercent = 0f,
+                samples = dbSamples,
+                soundCharacter = current.soundProfile.character
+            )
+            current.copy(activity = newActivity, suitabilityResult = newResult)
+        }
+    }
+
     private fun startCapture() {
         captureJob?.cancel()
         captureJob = viewModelScope.launch(Dispatchers.IO) {
