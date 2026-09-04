@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.khatibstudio.noyza.ui.components.AdBannerSlot
 import com.khatibstudio.noyza.ui.components.BestTimeToVisitCard
 import com.khatibstudio.noyza.ui.navigation.Screen
 import com.khatibstudio.noyza.ui.viewmodel.AnalyticsViewModel
@@ -187,6 +188,14 @@ fun AnalyticsScreen(
                         }
                     }
                 }
+            }
+
+            if (!uiState.isAdsRemoved) {
+                AdBannerSlot(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                )
             }
 
             Spacer(Modifier.height(24.dp))

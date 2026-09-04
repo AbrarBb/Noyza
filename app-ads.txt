@@ -1,0 +1,6 @@
+# app-ads.txt for Noyza
+# Developer: Khatib Studio
+# AdMob App ID: ca-app-pub-3807814510907688~9971686292
+# AdMob Publisher ID: pub-3807814510907688
+
+google.com, pub-3807814510907688, DIRECT, f08c47fec0942fa0

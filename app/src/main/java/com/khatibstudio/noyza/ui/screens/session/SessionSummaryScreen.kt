@@ -1,5 +1,7 @@
 package com.khatibstudio.noyza.ui.screens.session
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,6 +33,20 @@ fun SessionSummaryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showSavePlaceSheet by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    val onDone: () -> Unit = {
+        viewModel.onDoneClicked(activity) {
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Home.route) { inclusive = false }
+            }
+        }
+    }
+
+    BackHandler {
+        onDone()
+    }
 
     LaunchedEffect(sessionId) {
         viewModel.loadSession(sessionId)
@@ -241,18 +258,8 @@ fun SessionSummaryScreen(
 
             Spacer(Modifier.height(8.dp))
 
-            // Ad slot — after all useful content, per spec
-            if (!uiState.isAdsRemoved) {
-                AdBannerSlot(modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(8.dp))
-            }
-
             TextButton(
-                onClick = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = false }
-                    }
-                },
+                onClick = onDone,
                 modifier = Modifier.fillMaxWidth().height(48.dp)
             ) {
                 Text("Done")

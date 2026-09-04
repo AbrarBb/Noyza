@@ -139,11 +139,6 @@ fun ExploreScreen(
                 }
 
                 itemsIndexed(uiState.places) { index, place ->
-                    // Insert sponsored ad slot between #2 and #3
-                    if (index == 2 && !uiState.isAdsRemoved && uiState.places.size >= 3) {
-                        SponsoredAdSlot(modifier = Modifier.fillMaxWidth().padding(16.dp))
-                    }
-
                     PlaceRowCard(
                         place = place,
                         rankNumber = index + 1,
@@ -153,23 +148,17 @@ fun ExploreScreen(
                         }
                     )
                 }
+
+                if (!uiState.isAdsRemoved && uiState.places.isNotEmpty()) {
+                    item {
+                        AdBannerSlot(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                        )
+                    }
+                }
             }
         }
-    }
-}
-
-@Composable
-fun SponsoredAdSlot(modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        HorizontalDivider()
-        Text(
-            "Sponsored",
-            style = MaterialTheme.typography.labelSmall.copy(
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            modifier = Modifier.padding(vertical = 4.dp)
-        )
-        AdBannerSlot(modifier = Modifier.fillMaxWidth())
-        HorizontalDivider()
     }
 }

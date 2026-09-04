@@ -105,8 +105,7 @@ fun HistoryScreen(
             LazyColumn(
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
-                var adInserted = false
-                uiState.groupedSessions.entries.forEachIndexed { groupIndex, (dateLabel, sessions) ->
+                uiState.groupedSessions.entries.forEach { (dateLabel, sessions) ->
                     item {
                         Text(
                             text = dateLabel,
@@ -126,16 +125,15 @@ fun HistoryScreen(
                             }
                         )
                     }
+                }
 
-                    // Ad between date groups (once per history view, after Today group)
-                    if (!adInserted && !uiState.isAdsRemoved && groupIndex == 0) {
-                        adInserted = true
-                        item {
-                            AdBannerSlot(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                isAdsRemoved = uiState.isAdsRemoved
-                            )
-                        }
+                if (!uiState.isAdsRemoved && uiState.groupedSessions.isNotEmpty()) {
+                    item {
+                        AdBannerSlot(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                        )
                     }
                 }
             }

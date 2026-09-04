@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import android.app.Activity
+import com.khatibstudio.noyza.ads.AdManager
+
 data class SessionSummaryUiState(
     val session: Session? = null,
     val samples: List<Float> = emptyList(),
@@ -23,8 +26,19 @@ data class SessionSummaryUiState(
 class SessionSummaryViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val placeRepository: PlaceRepository,
-    private val preferences: NoyZaPreferences
+    private val preferences: NoyZaPreferences,
+    private val adManager: AdManager
 ) : ViewModel() {
+
+    fun onDoneClicked(activity: Activity?, onFinished: () -> Unit) {
+        if (activity != null) {
+            viewModelScope.launch {
+                adManager.tryShowSessionCompletionInterstitial(activity, onDismissed = onFinished)
+            }
+        } else {
+            onFinished()
+        }
+    }
 
     private val _uiState = MutableStateFlow(SessionSummaryUiState())
     val uiState: StateFlow<SessionSummaryUiState> = _uiState.asStateFlow()

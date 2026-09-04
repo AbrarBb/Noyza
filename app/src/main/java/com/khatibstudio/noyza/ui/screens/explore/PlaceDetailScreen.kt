@@ -19,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.khatibstudio.noyza.domain.model.ActivityType
 import com.khatibstudio.noyza.domain.model.SuitabilityState
+import com.khatibstudio.noyza.ui.components.AdBannerSlot
 import com.khatibstudio.noyza.ui.components.BestTimeToVisitCard
 import com.khatibstudio.noyza.ui.components.scoreStateColor
 import com.khatibstudio.noyza.ui.screens.session.SessionLiveGraph
@@ -214,6 +215,14 @@ fun PlaceDetailScreen(
                     )
                 }
                 Spacer(Modifier.height(16.dp))
+            }
+
+            if (!uiState.isAdsRemoved) {
+                AdBannerSlot(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp)
+                )
             }
         }
     }

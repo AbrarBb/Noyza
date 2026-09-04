@@ -20,6 +20,7 @@ data class AnalyticsUiState(
     val noisiestDay: String = "",
     val todayScore: Int = 0,
     val isPremium: Boolean = false,
+    val isAdsRemoved: Boolean = false,
     val scheduleForecast: PlaceScheduleForecast? = null
 )
 
@@ -37,6 +38,11 @@ class AnalyticsViewModel @Inject constructor(
         viewModelScope.launch {
             preferences.isPremium.collect { premium ->
                 _uiState.update { it.copy(isPremium = premium) }
+            }
+        }
+        viewModelScope.launch {
+            preferences.isAdsRemoved.collect { removed ->
+                _uiState.update { it.copy(isAdsRemoved = removed) }
             }
         }
         viewModelScope.launch {

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.khatibstudio.noyza.data.preferences.NoyZaPreferences
 import com.khatibstudio.noyza.data.local.entity.toProfile
 import com.khatibstudio.noyza.data.repository.CustomActivityRepository
 import com.khatibstudio.noyza.domain.engine.NoiseForecastingEngine
@@ -22,7 +23,8 @@ data class PlaceDetailUiState(
     val place: Place? = null,
     val samples: List<Float> = emptyList(),
     val activityCompatibility: Map<ActivityProfile, Int> = emptyMap(),
-    val scheduleForecast: PlaceScheduleForecast? = null
+    val scheduleForecast: PlaceScheduleForecast? = null,
+    val isAdsRemoved: Boolean = false
 )
 
 @HiltViewModel
@@ -31,11 +33,20 @@ class PlaceDetailViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val suitabilityEngine: SuitabilityEngine,
     private val forecastingEngine: NoiseForecastingEngine,
-    private val customActivityRepository: CustomActivityRepository
+    private val customActivityRepository: CustomActivityRepository,
+    private val preferences: NoyZaPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlaceDetailUiState())
     val uiState: StateFlow<PlaceDetailUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            preferences.isAdsRemoved.collect { removed ->
+                _uiState.update { it.copy(isAdsRemoved = removed) }
+            }
+        }
+    }
 
     fun loadPlace(placeId: Long) {
         viewModelScope.launch {

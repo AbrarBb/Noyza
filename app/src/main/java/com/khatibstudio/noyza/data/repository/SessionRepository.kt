@@ -49,6 +49,10 @@ class SessionRepository @Inject constructor(
         noiseSampleDao.deleteAllSamples()
     }
 
+    suspend fun getSessionCount(): Int {
+        return sessionDao.getSessionCount()
+    }
+
     suspend fun saveSamples(sessionId: Long, dbValues: List<Float>) {
         val now = System.currentTimeMillis()
         val samples = dbValues.mapIndexed { index, db ->

@@ -19,14 +19,16 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // AdMob App ID — replace with real ID before publishing
-        manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+        // Real AdMob App ID
+        manifestPlaceholders["admobAppId"] = "ca-app-pub-3807814510907688~9971686292"
     }
 
     buildTypes {
         debug {
             isMinifyEnabled = false
             buildConfigField("Boolean", "IS_DEBUG", "true")
+            // Google sample App ID for debug to protect AdMob account during testing
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
             // Official Google test ad unit IDs — safe for development
             buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
             buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
@@ -36,6 +38,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-3807814510907688~9971686292"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

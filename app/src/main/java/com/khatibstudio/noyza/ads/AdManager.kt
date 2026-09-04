@@ -6,10 +6,9 @@ import android.util.Log
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.google.android.gms.ads.rewarded.RewardedAd
-import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.khatibstudio.noyza.BuildConfig
 import com.khatibstudio.noyza.data.preferences.NoyZaPreferences
+import com.khatibstudio.noyza.data.repository.SessionRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,22 +23,26 @@ import javax.inject.Singleton
  *
  * Rules enforced:
  * - Never show ads during active measurement
- * - Never show ads before session results
- * - Interstitial frequency cap: max 1 per [MIN_INTERSTITIAL_INTERVAL_MS] ms
- * - All ad units toggle off instantly when Premium is active
- * - Debug builds always use Google test IDs (Cyvia lesson)
+ * - Never show ads while Session Summary is open
+ * - Interstitial fires strictly on return to Home after completing a session
+ * - Interstitial cap: max 1 per session, never on first 2 sessions ever, never within 3–4 minutes
+ * - All ads disabled immediately when Premium / Ads Removed is active
+ * - Debug builds always use official Google test IDs
  */
 @Singleton
 class AdManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val preferences: NoyZaPreferences
+    private val preferences: NoyZaPreferences,
+    private val sessionRepository: SessionRepository
 ) {
     companion object {
         private const val TAG = "AdManager"
 
-        // Minimum 3 minutes between interstitials + 3 user actions
-        private const val MIN_INTERSTITIAL_INTERVAL_MS = 3 * 60 * 1000L
-        private const val MIN_ACTIONS_BEFORE_INTERSTITIAL = 3
+        // Frequency cap: minimum 3.5 minutes (210 seconds) between interstitials
+        private const val MIN_INTERSTITIAL_INTERVAL_MS = 210_000L
+
+        // Never show interstitial on a user's first 2 sessions ever
+        private const val MIN_SESSIONS_BEFORE_INTERSTITIAL = 3
 
         // Exponential backoff delays for ad preloading
         private val BACKOFF_DELAYS = listOf(15_000L, 30_000L, 60_000L, 120_000L, 300_000L)
@@ -48,100 +51,107 @@ class AdManager @Inject constructor(
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var interstitialAd: InterstitialAd? = null
-    private var rewardedAd: RewardedAd? = null
 
     private val _isInterstitialReady = MutableStateFlow(false)
     val isInterstitialReady: StateFlow<Boolean> = _isInterstitialReady.asStateFlow()
 
-    private val _isRewardedReady = MutableStateFlow(false)
-    val isRewardedReady: StateFlow<Boolean> = _isRewardedReady.asStateFlow()
-
     private var isActiveMeasurement = false
 
     /**
-     * Initialize AdMob SDK and preload ads.
+     * Initialize AdMob SDK and preload interstitial.
      * Call this from Application.onCreate()
      */
     fun initialize() {
         MobileAds.initialize(context) { initStatus ->
             Log.d(TAG, "AdMob initialized: ${initStatus.adapterStatusMap}")
             preloadInterstitial()
-            preloadRewarded()
         }
     }
 
     /**
-     * Signal that a measurement session is active.
-     * Prevents any interstitial from showing during measurement.
+     * Signal that an active measurement session is running.
+     * Guarantees zero ads can interrupt active measurement.
      */
     fun setMeasurementActive(active: Boolean) {
         isActiveMeasurement = active
     }
 
     /**
-     * Show an interstitial ad if conditions are met.
-     * Returns true if the ad was shown.
+     * Show an interstitial ad upon session completion (when returning from Session Summary to Home).
      *
      * Will NOT show if:
-     * - User is Premium / Ads Removed
+     * - User has Premium / Ads Removed
      * - Active measurement is running
-     * - Frequency cap not met
-     * - No ad loaded
+     * - User has completed <= 2 sessions ever (first 2 sessions rule)
+     * - Shown less than 3.5 minutes ago (frequency cap rule)
+     * - Ad is not yet loaded
+     *
+     * Calls [onDismissed] in all cases (shown, failed, or skipped) so navigation proceeds cleanly.
      */
-    suspend fun tryShowInterstitial(activity: Activity): Boolean {
-        if (isActiveMeasurement) return false
-        if (preferences.isAdsRemoved.first()) return false
+    suspend fun tryShowSessionCompletionInterstitial(
+        activity: Activity,
+        onDismissed: () -> Unit = {}
+    ): Boolean {
+        if (isActiveMeasurement) {
+            Log.d(TAG, "Skipping interstitial: measurement active")
+            onDismissed()
+            return false
+        }
+        if (preferences.isAdsRemoved.first()) {
+            Log.d(TAG, "Skipping interstitial: ads removed")
+            onDismissed()
+            return false
+        }
 
+        // Rule: Never on a user's first 2 sessions ever
+        val totalSessions = try {
+            sessionRepository.getSessionCount()
+        } catch (e: Exception) {
+            0
+        }
+        if (totalSessions < MIN_SESSIONS_BEFORE_INTERSTITIAL) {
+            Log.d(TAG, "Skipping interstitial: user has only $totalSessions sessions (min $MIN_SESSIONS_BEFORE_INTERSTITIAL required)")
+            onDismissed()
+            return false
+        }
+
+        // Rule: Never twice within 3–4 minutes
         val lastShown = preferences.lastInterstitialShown.first()
-        val actionCount = preferences.actionCountSinceAd.first()
         val now = System.currentTimeMillis()
+        if ((now - lastShown) < MIN_INTERSTITIAL_INTERVAL_MS) {
+            Log.d(TAG, "Skipping interstitial: frequency cap active (${(now - lastShown) / 1000}s elapsed)")
+            onDismissed()
+            return false
+        }
 
-        val timeOk = (now - lastShown) >= MIN_INTERSTITIAL_INTERVAL_MS
-        val actionsOk = actionCount >= MIN_ACTIONS_BEFORE_INTERSTITIAL
-
-        if (!timeOk || !actionsOk) return false
-
-        val ad = interstitialAd ?: return false
+        val ad = interstitialAd
+        if (ad == null) {
+            Log.d(TAG, "Interstitial ad not ready, preloading next")
+            preloadInterstitial()
+            onDismissed()
+            return false
+        }
 
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
             override fun onAdDismissedFullScreenContent() {
                 interstitialAd = null
                 _isInterstitialReady.value = false
-                preloadInterstitial() // Preload next one immediately
+                preloadInterstitial()
+                onDismissed()
             }
+
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                Log.w(TAG, "Interstitial failed to show: ${error.message}")
                 interstitialAd = null
                 _isInterstitialReady.value = false
                 preloadInterstitial()
+                onDismissed()
             }
         }
 
         ad.show(activity)
         preferences.recordInterstitialShown()
         return true
-    }
-
-    /**
-     * Show a rewarded ad. Call only when user explicitly opts in.
-     */
-    fun showRewarded(activity: Activity, onRewarded: () -> Unit, onFailed: () -> Unit) {
-        val ad = rewardedAd ?: run { onFailed(); return }
-
-        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-            override fun onAdDismissedFullScreenContent() {
-                rewardedAd = null
-                _isRewardedReady.value = false
-                preloadRewarded()
-            }
-            override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                rewardedAd = null
-                _isRewardedReady.value = false
-                preloadRewarded()
-                onFailed()
-            }
-        }
-
-        ad.show(activity) { _ -> onRewarded() }
     }
 
     /**
@@ -169,33 +179,6 @@ class AdManager @Inject constructor(
                     scope.launch {
                         delay(delay)
                         preloadInterstitial(minOf(retryIndex + 1, BACKOFF_DELAYS.size - 1))
-                    }
-                }
-            }
-        )
-    }
-
-    private fun preloadRewarded(retryIndex: Int = 0) {
-        val request = AdRequest.Builder().build()
-        RewardedAd.load(
-            context,
-            BuildConfig.ADMOB_REWARDED_ID,
-            request,
-            object : RewardedAdLoadCallback() {
-                override fun onAdLoaded(ad: RewardedAd) {
-                    Log.d(TAG, "Rewarded ad loaded")
-                    rewardedAd = ad
-                    _isRewardedReady.value = true
-                }
-
-                override fun onAdFailedToLoad(error: LoadAdError) {
-                    Log.w(TAG, "Rewarded failed: ${error.message}")
-                    rewardedAd = null
-                    _isRewardedReady.value = false
-                    val delay = BACKOFF_DELAYS.getOrElse(retryIndex) { BACKOFF_DELAYS.last() }
-                    scope.launch {
-                        delay(delay)
-                        preloadRewarded(minOf(retryIndex + 1, BACKOFF_DELAYS.size - 1))
                     }
                 }
             }
