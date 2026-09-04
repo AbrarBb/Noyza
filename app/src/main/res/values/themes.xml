@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme -->
+    <style name="Theme.Noyza" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/noyza_dark_bg</item>
+    </style>
+
+    <!-- Splash screen theme using androidx.core.splashscreen -->
+    <style name="Theme.Noyza.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/noyza_dark_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Noyza</item>
+    </style>
+</resources>

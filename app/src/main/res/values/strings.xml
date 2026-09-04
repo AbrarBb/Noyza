@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Noyza</string>
+    <string name="widget_name">Noyza Widget</string>
+    <string name="widget_description">Current noise level and suitability</string>
+</resources>
