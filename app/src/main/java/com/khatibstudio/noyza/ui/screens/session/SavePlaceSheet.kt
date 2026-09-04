@@ -65,7 +65,14 @@ fun SavePlaceSheet(
                     FilterChip(
                         selected = selectedCategory == category,
                         onClick = { selectedCategory = category },
-                        label = { Text("${category.emoji} ${category.displayName}") }
+                        leadingIcon = {
+                            Icon(
+                                imageVector = category.icon,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        label = { Text(category.displayName) }
                     )
                 }
             }

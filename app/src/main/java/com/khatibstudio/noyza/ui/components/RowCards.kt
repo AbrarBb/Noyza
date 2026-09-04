@@ -3,6 +3,7 @@ package com.khatibstudio.noyza.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronRight
@@ -11,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.khatibstudio.noyza.domain.model.Place
@@ -39,11 +41,21 @@ fun SessionSummaryRowCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Activity emoji
-            Text(
-                text = session.activityType.emoji,
-                style = MaterialTheme.typography.titleLarge
-            )
+            // Activity icon in circle container
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = session.activityType.icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
             Spacer(Modifier.width(12.dp))
 
             // Details
@@ -109,7 +121,7 @@ fun SessionSummaryRowCard(
 fun PlaceRowCard(
     place: Place,
     onClick: () -> Unit,
-    rankEmoji: String? = null
+    rankNumber: Int? = null
 ) {
     Card(
         modifier = Modifier
@@ -124,19 +136,48 @@ fun PlaceRowCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (rankEmoji != null) {
-                Text(
-                    text = rankEmoji,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Spacer(Modifier.width(12.dp))
-            } else {
-                Text(
-                    text = place.category.emoji,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Spacer(Modifier.width(12.dp))
+            if (rankNumber != null && rankNumber <= 3) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = when (rankNumber) {
+                        1 -> Color(0xFFFFD700).copy(alpha = 0.2f)
+                        2 -> Color(0xFFC0C0C0).copy(alpha = 0.2f)
+                        3 -> Color(0xFFCD7F32).copy(alpha = 0.2f)
+                        else -> MaterialTheme.colorScheme.surfaceVariant
+                    },
+                    modifier = Modifier.padding(end = 12.dp)
+                ) {
+                    Text(
+                        text = "#$rankNumber",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = when (rankNumber) {
+                                1 -> Color(0xFFFFD700)
+                                2 -> Color(0xFFC0C0C0)
+                                3 -> Color(0xFFCD7F32)
+                                else -> MaterialTheme.colorScheme.primary
+                            }
+                        ),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
+
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = place.category.icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -155,7 +196,7 @@ fun PlaceRowCard(
                     if (place.measurementCount > 0) {
                         Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
-                            text = "${place.measurementCount} measurements",
+                            text = "${place.measurementCount} sessions",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

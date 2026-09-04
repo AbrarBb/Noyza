@@ -44,12 +44,21 @@ fun QuickMeasureSheet(
 
             Spacer(Modifier.height(4.dp))
 
-            Text(
-                text = "${activity.emoji} ${activity.displayName}",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = activity.icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
                 )
-            )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = activity.displayName,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+            }
 
             Spacer(Modifier.height(24.dp))
 

@@ -95,9 +95,11 @@ private fun ActivityChip(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = activity.emoji,
-                style = MaterialTheme.typography.titleMedium
+            Icon(
+                imageVector = activity.icon,
+                contentDescription = null,
+                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
             )
             Spacer(Modifier.height(4.dp))
             Text(

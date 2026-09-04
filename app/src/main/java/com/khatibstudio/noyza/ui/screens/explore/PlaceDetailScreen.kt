@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -81,12 +82,21 @@ fun PlaceDetailScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
-                Text(
-                    text = "${place.category.emoji} ${place.category.displayName}",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        color = MaterialTheme.colorScheme.primary
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = place.category.icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
                     )
-                )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = place.category.displayName,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                }
             }
 
             Spacer(Modifier.height(20.dp))
@@ -151,11 +161,22 @@ fun PlaceDetailScreen(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                "${activity.emoji} ${activity.displayName}",
+                            Row(
                                 modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = activity.icon,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    activity.displayName,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                             Text(
                                 "$compatScore/100",
                                 style = MaterialTheme.typography.labelLarge.copy(
@@ -171,12 +192,21 @@ fun PlaceDetailScreen(
             Spacer(Modifier.height(24.dp))
 
             if (place.notes.isNotEmpty()) {
-                Text(
-                    "📝 ${place.notes}",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.EditNote,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
                     )
-                )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        place.notes,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                }
                 Spacer(Modifier.height(16.dp))
             }
         }

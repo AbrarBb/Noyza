@@ -20,7 +20,7 @@
 
 ---
 
-## 📌 Overview
+## Overview
 
 **Noyza** is a modern, intelligent environment and noise suitability Android application developed by **Khatib Studio**. 
 
@@ -32,15 +32,15 @@ Noyza measures surrounding ambient sound using the device microphone in real-tim
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 🎙️ 1. Real-Time Noise Measurement & Smart Gauge
+### 1. Real-Time Noise Measurement & Smart Gauge
 - **Acoustic Pipeline:** Real-time PCM audio capture using `AudioRecord` $\rightarrow$ Root Mean Square (RMS) calculation $\rightarrow$ estimated decibel (dB) output.
 - **Exponential Smoothing:** Exponential moving average algorithm ($\alpha = 0.15$) for responsive, flutter-free gauge animation.
 - **Microphone Calibration:** Adjustable calibration slider ($-10\text{ dB}$ to $+10\text{ dB}$) with 5 quick presets (Quiet Room, Modern Office, Smartphone Mic, Headset, Factory Default).
 - **Dynamic Circular Gauge:** Smooth Canvas-drawn circular gauge with responsive gradient arcs reflecting the live sound environment.
 
-### 🧠 2. Activity-Based Suitability Engine
+### 2. Activity-Based Suitability Engine
 Noyza calculates environment suitability through a 4-component weighted heuristic:
 * **40% Average Noise Suitability:** Closeness to ideal dB range for the chosen activity.
 * **25% Noise Stability:** Standard deviation and variance penalty for fluctuating environments.
@@ -48,40 +48,40 @@ Noyza calculates environment suitability through a 4-component weighted heuristi
 * **15% Sustained Exposure:** Duration spent in loud or very loud thresholds.
 
 #### 10 Built-In Activity Profiles
-| Activity | Emoji | Ideal Range | Acceptable Max | Description |
+| Activity | Icon | Ideal Range | Acceptable Max | Description |
 |---|:---:|:---:|:---:|---|
-| **Study** | 📚 | 35 – 55 dB | 70 dB | Focused academic study and exam prep |
-| **Deep Work** | 💻 | 30 – 50 dB | 65 dB | High-focus professional tasks and coding |
-| **Reading** | 📖 | 35 – 55 dB | 65 dB | Casual or intensive reading |
-| **Recording** | 🎙 | 20 – 40 dB | 50 dB | Podcasts, vocal audio, and video recording |
-| **Meeting** | 💬 | 45 – 65 dB | 75 dB | Online calls and conference meetings |
-| **Sleep** | 😴 | 20 – 40 dB | 50 dB | Rest, naps, and night sleep |
-| **Relax** | 🧘 | 30 – 55 dB | 65 dB | Downtime, meditation, and calm rest |
-| **Focus** | 🎧 | 35 – 55 dB | 68 dB | General concentration and creative work |
-| **Conversation** | 🗣 | 50 – 70 dB | 80 dB | Casual conversations and coffee chats |
-| **Exercise** | 🏋 | 55 – 80 dB | 90 dB | Workouts and physical fitness |
+| **Study** | School | 35 – 55 dB | 70 dB | Focused academic study and exam prep |
+| **Deep Work** | Laptop | 30 – 50 dB | 65 dB | High-focus professional tasks and coding |
+| **Reading** | MenuBook | 35 – 55 dB | 65 dB | Casual or intensive reading |
+| **Recording** | Mic | 20 – 40 dB | 50 dB | Podcasts, vocal audio, and video recording |
+| **Meeting** | Groups | 45 – 65 dB | 75 dB | Online calls and conference meetings |
+| **Sleep** | Bedtime | 20 – 40 dB | 50 dB | Rest, naps, and night sleep |
+| **Relax** | SelfImprovement | 30 – 55 dB | 65 dB | Downtime, meditation, and calm rest |
+| **Focus** | Headphones | 35 – 55 dB | 68 dB | General concentration and creative work |
+| **Conversation** | Forum | 50 – 70 dB | 80 dB | Casual conversations and coffee chats |
+| **Exercise** | FitnessCenter | 55 – 80 dB | 90 dB | Workouts and physical fitness |
 
-### ⚡ 3. Quick Measure & Active Session Tracking
+### 3. Quick Measure & Active Session Tracking
 - **Quick Measure:** 10–30 second rapid assessment bottom sheet with instant recommendation.
 - **Active Session Mode:** Full-screen measurement with foreground service (`MeasurementService`), live cubic-bezier Canvas noise graph, orange spike detection markers, and 65 dB reference line.
 - **High-Noise Alerts:** Real-time push notifications when noise exceeds the acceptable threshold for 3+ minutes.
 - **Session Summary:** Comprehensive post-measurement report with average/peak/minimum dB, stability score, percentage distribution breakdown (*Quiet*, *Moderate*, *Loud*, *Very Loud*), and one-tap **Save Place** dialog.
 
-### 📍 4. Saved Places & Exploration
-- **Explore Screen:** Ranked list of saved places with 🥇, 🥈, 🥉 badges and quick filters (*Best Overall*, *Quietest*, *Most Stable*, *Category*).
+### 4. Saved Places & Exploration
+- **Explore Screen:** Ranked list of saved places with #1, #2, #3 badges and quick filters (*Best Overall*, *Quietest*, *Most Stable*, *Category*).
 - **Place Detail & Compatibility Matrix:** Visual acoustic compatibility matrix rating the location across **all 10 activities** simultaneously (e.g. Study 94%, Deep Work 91%, Reading 96%).
 - **Place Comparison:** Side-by-side comparison of multiple saved spots to decide the optimal working or resting location.
 
-### 📊 5. History & Analytics
+### 5. History & Analytics
 - **Grouped Session History:** Date-grouped session logs (*Today*, *Yesterday*, past dates) with activity icons, scores, and duration.
 - **7-Day Analytics:** Weekly average dB, environment suitability scores, best day vs. noisiest day, and noise trends by location.
 - **Data Privacy & Export:** Instant CSV export of all recorded session data via Android `FileProvider` and one-tap total data wipe.
 
-### 🧩 6. Jetpack Glance Home Screen Widget
+### 6. Jetpack Glance Home Screen Widget
 - Compact home screen widget showing live estimated noise level and activity suitability status.
 - One-tap quick launch into measurement mode.
 
-### 💎 7. Monetization & Premium Architecture
+### 7. Monetization & Premium Architecture
 - **AdMob Integration:** Centralized `AdManager` with banner, interstitial, and native ad support.
   - Frequency-capped interstitial transitions.
   - **Zero ads during active noise measurement** (guaranteed non-distracting user experience).
@@ -94,13 +94,13 @@ Noyza calculates environment suitability through a 4-component weighted heuristi
 
 ---
 
-## 🔒 Privacy Guarantee
+## Privacy Guarantee
 
 > **Privacy Notice:** Noyza does **NOT** record, store, transcribe, or transmit raw audio data. Audio captured by `AudioRecord` is converted in-memory into numerical RMS values and immediately discarded. Only the computed decibel numbers and statistical summaries are stored locally in the private Room database.
 
 ---
 
-## 🏗️ Architecture & Technology Stack
+## Architecture & Technology Stack
 
 ```
 com.khatibstudio.noyza
@@ -140,7 +140,7 @@ com.khatibstudio.noyza
 
 ---
 
-## 🛠️ Build & Setup Instructions
+## Build & Setup Instructions
 
 ### Prerequisites
 1. **Android Studio** Ladybug (2024.2+) or newer.
@@ -166,7 +166,7 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ---
 
-## 📋 Lessons Applied from Cyvia
+## Lessons Applied from Cyvia
 - **Global Edge-to-Edge:** Configured via `enableEdgeToEdge()` in `MainActivity` with dynamic window insets.
 - **Dynamic Navigation Chrome:** Bottom navigation bar automatically hides on sub-screens to maximize screen real estate.
 - **Strict ProGuard Rules:** Rules for Room, Gson, and Google Play Billing pre-configured in `proguard-rules.pro`.
@@ -174,8 +174,8 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ---
 
-## 📄 License & Attribution
+## License & Attribution
 
-Developed with ❤️ by **Abrar Khatib Lajim** ([Khatib Studio](https://github.com/AbrarBb)).
+Developed by **Abrar Khatib Lajim** ([Khatib Studio](https://github.com/AbrarBb)).
 
 *Disclaimer: Smartphone microphones are not calibrated sound meters. Decibel values and environmental suitability scores are algorithmic estimates designed for everyday convenience, not professional or medical acoustic certifications.*

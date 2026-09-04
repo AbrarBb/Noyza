@@ -150,9 +150,11 @@ private fun ActivitySelectionCard(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = activity.emoji,
-                style = MaterialTheme.typography.headlineSmall
+            Icon(
+                imageVector = activity.icon,
+                contentDescription = null,
+                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(32.dp)
             )
             Spacer(Modifier.height(8.dp))
             Text(

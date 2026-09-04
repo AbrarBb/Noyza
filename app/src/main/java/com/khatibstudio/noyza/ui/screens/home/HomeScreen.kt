@@ -314,9 +314,11 @@ private fun HomeEmptyState() {
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "🌟",
-            style = MaterialTheme.typography.displaySmall
+        Icon(
+            imageVector = Icons.Outlined.GraphicEq,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(48.dp)
         )
         Spacer(Modifier.height(16.dp))
         Text(

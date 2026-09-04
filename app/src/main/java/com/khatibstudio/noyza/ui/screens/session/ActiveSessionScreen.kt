@@ -6,6 +6,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -56,7 +57,14 @@ fun ActiveSessionScreen(
     if (uiState.showHighNoiseAlert) {
         AlertDialog(
             onDismissRequest = { viewModel.dismissHighNoiseAlert() },
-            icon = { Text("🔊", style = MaterialTheme.typography.headlineMedium) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Outlined.VolumeUp,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(32.dp)
+                )
+            },
             title = { Text("Noise Increased") },
             text = { Text(uiState.highNoiseAlertMessage) },
             confirmButton = {
@@ -136,11 +144,22 @@ fun ActiveSessionScreen(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "${uiState.activity.emoji} ${uiState.activity.displayName} Session",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = uiState.activity.icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "${uiState.activity.displayName} Session",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
                 // Pause indicator
                 if (uiState.isPaused) {
                     Surface(
@@ -310,14 +329,24 @@ private fun NoiseLevelStatusBadge(noiseLevel: NoiseLevel) {
         color = container,
         shape = RoundedCornerShape(20.dp)
     ) {
-        Text(
-            text = "🟢 ${noiseLevel.label}",
-            style = MaterialTheme.typography.labelLarge.copy(
-                color = color,
-                fontWeight = FontWeight.SemiBold
-            ),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-        )
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(color = color, shape = CircleShape)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = noiseLevel.label,
+                style = MaterialTheme.typography.labelLarge.copy(
+                    color = color,
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+        }
     }
 }
 

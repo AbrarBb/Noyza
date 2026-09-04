@@ -3,10 +3,12 @@ package com.khatibstudio.noyza.ui.screens.explore
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.CompareArrows
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -56,7 +58,12 @@ fun PlaceComparisonScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(32.dp)
                 ) {
-                    Text("📊", style = MaterialTheme.typography.displaySmall)
+                    Icon(
+                        imageVector = Icons.Outlined.CompareArrows,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(48.dp)
+                    )
                     Spacer(Modifier.height(16.dp))
                     Text(
                         "Save at least 2 places to compare them.",
@@ -74,10 +81,19 @@ fun PlaceComparisonScreen(
                 .padding(16.dp)
         ) {
             // Activity filter for comparison
-            Text(
-                "Compare for: ${uiState.selectedActivity.emoji} ${uiState.selectedActivity.displayName}",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = uiState.selectedActivity.icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Compare for: ${uiState.selectedActivity.displayName}",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
 
@@ -150,7 +166,20 @@ private fun PlaceComparisonCard(place: Place, activity: ActivityType, onClick: (
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(place.category.emoji, style = MaterialTheme.typography.titleLarge)
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = place.category.icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(place.name, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))

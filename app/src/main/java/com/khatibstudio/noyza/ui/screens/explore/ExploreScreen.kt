@@ -4,6 +4,8 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -59,7 +61,14 @@ fun ExploreScreen(
                 FilterChip(
                     selected = uiState.selectedActivity == activity,
                     onClick = { viewModel.selectActivity(activity) },
-                    label = { Text("${activity.emoji} ${activity.displayName}") }
+                    leadingIcon = {
+                        Icon(
+                            imageVector = activity.icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    },
+                    label = { Text(activity.displayName) }
                 )
             }
         }
@@ -89,7 +98,12 @@ fun ExploreScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.padding(32.dp)
                 ) {
-                    Text("📍", style = MaterialTheme.typography.displaySmall)
+                    Icon(
+                        imageVector = Icons.Outlined.Place,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(48.dp)
+                    )
                     Spacer(Modifier.height(16.dp))
                     Text(
                         "Your favorite places will appear here.",
@@ -124,7 +138,6 @@ fun ExploreScreen(
                     )
                 }
 
-                val rankEmojis = listOf("🥇", "🥈", "🥉")
                 itemsIndexed(uiState.places) { index, place ->
                     // Insert sponsored ad slot between #2 and #3
                     if (index == 2 && !uiState.isAdsRemoved && uiState.places.size >= 3) {
@@ -133,7 +146,7 @@ fun ExploreScreen(
 
                     PlaceRowCard(
                         place = place,
-                        rankEmoji = rankEmojis.getOrNull(index),
+                        rankNumber = index + 1,
                         onClick = {
                             navController.navigate(Screen.PlaceDetail.createRoute(place.id))
                         }

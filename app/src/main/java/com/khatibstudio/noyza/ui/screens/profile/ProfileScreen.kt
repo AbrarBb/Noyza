@@ -81,9 +81,9 @@ fun ProfileScreen(
         // ─── Personalization ──────────────────────────────────────────────
         ProfileSection(title = "Personalization") {
             ProfileSettingRow(
-                icon = Icons.Outlined.Star,
+                icon = uiState.defaultActivity.icon,
                 title = "Default Activity",
-                subtitle = "${uiState.defaultActivity.emoji} ${uiState.defaultActivity.displayName}",
+                subtitle = uiState.defaultActivity.displayName,
                 onClick = { /* Open activity picker */ }
             )
         }
@@ -180,7 +180,12 @@ private fun PremiumBannerCard(onClick: () -> Unit) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("⭐", style = MaterialTheme.typography.titleLarge)
+            Icon(
+                imageVector = Icons.Outlined.WorkspacePremium,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -216,7 +221,12 @@ private fun PremiumActiveBadge() {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("✨", style = MaterialTheme.typography.titleMedium)
+            Icon(
+                imageVector = Icons.Outlined.CheckCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
             Spacer(Modifier.width(8.dp))
             Text(
                 "Noyza Premium Active",

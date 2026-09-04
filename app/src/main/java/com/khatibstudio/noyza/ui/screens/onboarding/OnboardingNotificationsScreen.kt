@@ -7,7 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -100,7 +101,7 @@ fun OnboardingNotificationsScreen(
                 NotificationToggleRow(
                     title = "High noise alerts",
                     description = "When your environment gets noisy during a session",
-                    emoji = "🔊",
+                    icon = Icons.Outlined.VolumeUp,
                     checked = highNoiseEnabled,
                     onCheckedChange = { highNoiseEnabled = it }
                 )
@@ -108,7 +109,7 @@ fun OnboardingNotificationsScreen(
                 NotificationToggleRow(
                     title = "Session reminders",
                     description = "When you've been measuring for a while",
-                    emoji = "⏱",
+                    icon = Icons.Outlined.Timer,
                     checked = sessionReminderEnabled,
                     onCheckedChange = { sessionReminderEnabled = it }
                 )
@@ -116,7 +117,7 @@ fun OnboardingNotificationsScreen(
                 NotificationToggleRow(
                     title = "Daily summary",
                     description = "Your environment score at end of day",
-                    emoji = "📊",
+                    icon = Icons.Outlined.BarChart,
                     checked = dailySummaryEnabled,
                     onCheckedChange = { dailySummaryEnabled = it }
                 )
@@ -170,7 +171,7 @@ fun OnboardingNotificationsScreen(
 private fun NotificationToggleRow(
     title: String,
     description: String,
-    emoji: String,
+    icon: ImageVector,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
@@ -180,9 +181,11 @@ private fun NotificationToggleRow(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = emoji,
-            style = MaterialTheme.typography.titleLarge
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp)
         )
         Spacer(Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {

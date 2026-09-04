@@ -1,5 +1,8 @@
 package com.khatibstudio.noyza.domain.model
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.khatibstudio.noyza.domain.model.ActivityType
 import com.khatibstudio.noyza.domain.model.NoiseLevel
 import com.khatibstudio.noyza.domain.model.SuitabilityState
@@ -90,16 +93,29 @@ data class NoiseSample(
 /**
  * Place categories for filtering and display.
  */
-enum class PlaceCategory(val displayName: String, val emoji: String) {
-    LIBRARY("Library", "📚"),
-    CAFE("Cafe", "☕"),
-    OFFICE("Office", "🏢"),
-    CLASSROOM("Classroom", "🏫"),
-    HOME("Home", "🏠"),
-    PARK("Park", "🌳"),
-    GYM("Gym", "🏋"),
-    RESTAURANT("Restaurant", "🍽"),
-    OTHER("Other", "📍");
+enum class PlaceCategory(val displayName: String) {
+    LIBRARY("Library"),
+    CAFE("Cafe"),
+    OFFICE("Office"),
+    CLASSROOM("Classroom"),
+    HOME("Home"),
+    PARK("Park"),
+    GYM("Gym"),
+    RESTAURANT("Restaurant"),
+    OTHER("Other");
+
+    val icon: ImageVector
+        get() = when (this) {
+            LIBRARY -> Icons.Outlined.LocalLibrary
+            CAFE -> Icons.Outlined.LocalCafe
+            OFFICE -> Icons.Outlined.Business
+            CLASSROOM -> Icons.Outlined.School
+            HOME -> Icons.Outlined.Home
+            PARK -> Icons.Outlined.Park
+            GYM -> Icons.Outlined.FitnessCenter
+            RESTAURANT -> Icons.Outlined.Restaurant
+            OTHER -> Icons.Outlined.Place
+        }
 
     companion object {
         fun fromName(name: String): PlaceCategory =

@@ -65,7 +65,18 @@ fun SessionSummaryScreen(
     ) {
         // Header
         TopAppBar(
-            title = { Text("${session.activityType.emoji} ${session.activityType.displayName} Complete") },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = session.activityType.icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("${session.activityType.displayName} Complete")
+                }
+            },
             navigationIcon = {
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(Icons.Outlined.Close, contentDescription = "Close")

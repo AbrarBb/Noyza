@@ -2,6 +2,7 @@ package com.khatibstudio.noyza.ui.screens.premium
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -63,10 +64,22 @@ fun PremiumScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Header
-            Text(
-                text = "⭐",
-                style = MaterialTheme.typography.displayMedium
-            )
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.WorkspacePremium,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
 
             Spacer(Modifier.height(12.dp))
 

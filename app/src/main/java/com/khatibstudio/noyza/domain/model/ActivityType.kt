@@ -1,12 +1,15 @@
 package com.khatibstudio.noyza.domain.model
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.ui.graphics.vector.ImageVector
+
 /**
  * Represents all available activities in Noyza.
- * Each activity has defined dB thresholds for scoring.
+ * Each activity has defined dB thresholds for scoring and an associated Material icon.
  */
 enum class ActivityType(
     val displayName: String,
-    val emoji: String,
     val description: String,
     val idealMinDb: Float,
     val idealMaxDb: Float,
@@ -17,7 +20,6 @@ enum class ActivityType(
 ) {
     STUDY(
         displayName = "Study",
-        emoji = "📚",
         description = "Focused academic study",
         idealMinDb = 35f,
         idealMaxDb = 55f,
@@ -28,7 +30,6 @@ enum class ActivityType(
     ),
     DEEP_WORK(
         displayName = "Deep Work",
-        emoji = "💻",
         description = "High-focus professional work",
         idealMinDb = 30f,
         idealMaxDb = 50f,
@@ -39,7 +40,6 @@ enum class ActivityType(
     ),
     READING(
         displayName = "Reading",
-        emoji = "📖",
         description = "Casual or intensive reading",
         idealMinDb = 35f,
         idealMaxDb = 55f,
@@ -50,7 +50,6 @@ enum class ActivityType(
     ),
     RECORDING(
         displayName = "Recording",
-        emoji = "🎙",
         description = "Audio/video recording",
         idealMinDb = 20f,
         idealMaxDb = 40f,
@@ -61,7 +60,6 @@ enum class ActivityType(
     ),
     MEETING(
         displayName = "Meeting",
-        emoji = "💬",
         description = "Online or in-person meetings",
         idealMinDb = 45f,
         idealMaxDb = 65f,
@@ -72,7 +70,6 @@ enum class ActivityType(
     ),
     SLEEP(
         displayName = "Sleep",
-        emoji = "😴",
         description = "Rest and sleeping",
         idealMinDb = 20f,
         idealMaxDb = 40f,
@@ -83,7 +80,6 @@ enum class ActivityType(
     ),
     RELAX(
         displayName = "Relax",
-        emoji = "🧘",
         description = "Relaxation and downtime",
         idealMinDb = 30f,
         idealMaxDb = 55f,
@@ -94,7 +90,6 @@ enum class ActivityType(
     ),
     FOCUS(
         displayName = "Focus",
-        emoji = "🎧",
         description = "General focused tasks",
         idealMinDb = 35f,
         idealMaxDb = 55f,
@@ -105,7 +100,6 @@ enum class ActivityType(
     ),
     CONVERSATION(
         displayName = "Conversation",
-        emoji = "🗣",
         description = "Casual conversation",
         idealMinDb = 50f,
         idealMaxDb = 70f,
@@ -116,7 +110,6 @@ enum class ActivityType(
     ),
     EXERCISE(
         displayName = "Exercise",
-        emoji = "🏋",
         description = "Physical exercise",
         idealMinDb = 55f,
         idealMaxDb = 80f,
@@ -125,6 +118,20 @@ enum class ActivityType(
         spikeSensitivity = 0.2f,
         stabilitySensitivity = 0.2f
     );
+
+    val icon: ImageVector
+        get() = when (this) {
+            STUDY -> Icons.Outlined.School
+            DEEP_WORK -> Icons.Outlined.Laptop
+            READING -> Icons.Outlined.MenuBook
+            RECORDING -> Icons.Outlined.Mic
+            MEETING -> Icons.Outlined.Groups
+            SLEEP -> Icons.Outlined.Bedtime
+            RELAX -> Icons.Outlined.SelfImprovement
+            FOCUS -> Icons.Outlined.Headphones
+            CONVERSATION -> Icons.Outlined.Forum
+            EXERCISE -> Icons.Outlined.FitnessCenter
+        }
 
     companion object {
         fun fromName(name: String): ActivityType =

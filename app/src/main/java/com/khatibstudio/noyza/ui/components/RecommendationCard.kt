@@ -3,10 +3,15 @@ package com.khatibstudio.noyza.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.khatibstudio.noyza.domain.model.RecommendationType
@@ -15,28 +20,28 @@ import com.khatibstudio.noyza.ui.theme.*
 
 /**
  * Recommendation card — communicates the primary recommendation to the user.
- * Uses text + emoji + color (never color alone).
+ * Uses text + icon + color (never color alone).
  */
 @Composable
 fun RecommendationCard(
     result: SuitabilityResult,
     modifier: Modifier = Modifier
 ) {
-    val (emoji, title, containerColor, contentColor) = when (result.recommendation) {
+    val (icon, title, containerColor, contentColor) = when (result.recommendation) {
         RecommendationType.RECOMMENDED -> Quadruple(
-            "✅",
+            Icons.Outlined.CheckCircle,
             "Recommended",
             QuietGreenContainer,
             QuietGreen
         )
         RecommendationType.CONSIDER_QUIETER -> Quadruple(
-            "⚠️",
+            Icons.Outlined.Info,
             "Consider a quieter place",
             ModerateAmberContainer,
             ModerateAmber
         )
         RecommendationType.NOT_IDEAL -> Quadruple(
-            "🔴",
+            Icons.Outlined.WarningAmber,
             "Not Ideal",
             VeryLoudRedContainer,
             VeryLoudRed
@@ -55,9 +60,11 @@ fun RecommendationCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = emoji,
-                style = MaterialTheme.typography.titleLarge
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(24.dp)
             )
             Spacer(Modifier.width(12.dp))
             Column {
