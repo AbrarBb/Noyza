@@ -39,8 +39,8 @@ fun SessionSummaryScreen(
     if (showSavePlaceSheet) {
         SavePlaceSheet(
             onDismiss = { showSavePlaceSheet = false },
-            onSave = { name, category, notes ->
-                viewModel.savePlace(sessionId, name, category, notes)
+            onSave = { name, category, notes, lat, lng ->
+                viewModel.savePlace(sessionId, name, category, notes, lat, lng)
                 showSavePlaceSheet = false
             }
         )

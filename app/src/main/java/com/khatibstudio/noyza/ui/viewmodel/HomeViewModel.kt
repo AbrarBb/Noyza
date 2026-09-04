@@ -12,6 +12,7 @@ import com.khatibstudio.noyza.data.repository.PlaceRepository
 import com.khatibstudio.noyza.data.repository.SessionRepository
 import com.khatibstudio.noyza.domain.engine.SuitabilityEngine
 import com.khatibstudio.noyza.domain.model.*
+import com.khatibstudio.noyza.audio.SoundProfile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -19,13 +20,19 @@ import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.min
 
+import com.khatibstudio.noyza.data.local.entity.CustomActivityEntity
+import com.khatibstudio.noyza.data.local.entity.toProfile
+import com.khatibstudio.noyza.data.repository.CustomActivityRepository
+import com.khatibstudio.noyza.domain.model.ActivityProfile
+import com.khatibstudio.noyza.domain.model.CustomActivityProfile
+
 data class HomeUiState(
     val currentDb: Float = 0f,
     val averageDb: Float = 0f,
     val peakDb: Float = 0f,
     val minimumDb: Float = Float.MAX_VALUE,
     val noiseLevel: NoiseLevel = NoiseLevel.QUIET,
-    val selectedActivity: ActivityType = ActivityType.STUDY,
+    val selectedActivity: ActivityProfile = ActivityType.STUDY,
     val suitabilityResult: SuitabilityResult = SuitabilityResult(),
     val durationSeconds: Long = 0L,
     val isActive: Boolean = false,
@@ -35,7 +42,9 @@ data class HomeUiState(
     val greeting: String = "Good morning",
     val isPremium: Boolean = false,
     val isAdsRemoved: Boolean = false,
-    val dbSamples: List<Float> = emptyList()    // for stability calculation
+    val dbSamples: List<Float> = emptyList(),    // for stability calculation
+    val soundProfile: SoundProfile = SoundProfile(),
+    val customActivities: List<CustomActivityProfile> = emptyList()
 )
 
 @HiltViewModel
@@ -45,7 +54,8 @@ class HomeViewModel @Inject constructor(
     private val suitabilityEngine: SuitabilityEngine,
     private val preferences: NoyZaPreferences,
     private val sessionRepository: SessionRepository,
-    private val placeRepository: PlaceRepository
+    private val placeRepository: PlaceRepository,
+    private val customActivityRepository: CustomActivityRepository
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -98,12 +108,23 @@ class HomeViewModel @Inject constructor(
                 _uiState.update { it.copy(savedPlaces = places.take(5)) }
             }
         }
+        viewModelScope.launch {
+            customActivityRepository.getAllCustomActivities().collect { list ->
+                _uiState.update { it.copy(customActivities = list.map { e -> e.toProfile() }) }
+            }
+        }
     }
 
     private fun observeAudio() {
         viewModelScope.launch {
             preferences.calibrationOffset.collect { offset ->
                 audioEngine.setCalibrationOffset(offset)
+            }
+        }
+
+        viewModelScope.launch {
+            audioEngine.soundProfile.collect { profile ->
+                _uiState.update { it.copy(soundProfile = profile) }
             }
         }
 
@@ -128,7 +149,8 @@ class HomeViewModel @Inject constructor(
                     minimumDb = newMin,
                     stabilityPercent = stability,
                     loudTimePercent = loudTime,
-                    samples = newSamples
+                    samples = newSamples,
+                    soundCharacter = state.soundProfile.character
                 )
 
                 _uiState.update { it.copy(
@@ -144,10 +166,20 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun selectActivity(activity: ActivityType) {
+    fun selectActivity(activity: ActivityProfile) {
         _uiState.update { it.copy(selectedActivity = activity) }
+        if (activity is ActivityType) {
+            viewModelScope.launch {
+                preferences.setDefaultActivity(activity)
+            }
+        }
+    }
+
+    fun saveCustomActivity(activity: CustomActivityEntity) {
         viewModelScope.launch {
-            preferences.setDefaultActivity(activity)
+            val id = customActivityRepository.saveCustomActivity(activity)
+            val profile = activity.copy(id = id).toProfile()
+            selectActivity(profile)
         }
     }
 
@@ -221,7 +253,8 @@ class HomeViewModel @Inject constructor(
                     minimumDb = min,
                     stabilityPercent = stability,
                     loudTimePercent = loudTime,
-                    samples = samples
+                    samples = samples,
+                    soundCharacter = _uiState.value.soundProfile.character
                 )
                 onComplete(result, avg, peak)
             }

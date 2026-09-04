@@ -142,7 +142,7 @@ fun OnboardingWelcomeScreen(navController: NavController) {
                 Spacer(Modifier.height(16.dp))
 
                 // Page indicator
-                OnboardingPageIndicator(currentPage = 0, totalPages = 4)
+                OnboardingPageIndicator(currentPage = 0, totalPages = 5)
             }
         }
     }

@@ -78,7 +78,7 @@ fun ExploreScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            val sorts = listOf("Best Overall", "Quietest", "Most Stable", "Recent")
+            val sorts = listOf("Best Match", "Quietest", "Nearby")
             itemsIndexed(sorts) { index, sort ->
                 FilterChip(
                     selected = uiState.sortIndex == index,
@@ -147,6 +147,7 @@ fun ExploreScreen(
                     PlaceRowCard(
                         place = place,
                         rankNumber = index + 1,
+                        distanceLabel = viewModel.getDistanceLabel(place),
                         onClick = {
                             navController.navigate(Screen.PlaceDetail.createRoute(place.id))
                         }

@@ -15,6 +15,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -48,11 +50,14 @@ fun LiveNoiseGaugeCard(
     )
 
     val gaugeColor = noiseLevelColor(noiseLevel)
+    val gaugeDescription = "Live noise level: ${currentDb.toInt()} decibels, classified as ${noiseLevel.label}. " +
+            "Session average: ${averageDb.toInt()} decibels, peak: ${peakDb.toInt()} decibels."
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .semantics { contentDescription = gaugeDescription },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface

@@ -1,5 +1,6 @@
 package com.khatibstudio.noyza.domain.engine
 
+import com.khatibstudio.noyza.domain.model.ActivityProfile
 import com.khatibstudio.noyza.domain.model.ActivityType
 import com.khatibstudio.noyza.domain.model.RecommendationType
 import com.khatibstudio.noyza.domain.model.SuitabilityResult
@@ -28,22 +29,24 @@ class SuitabilityEngine @Inject constructor() {
     /**
      * Calculate suitability for a completed session or quick measure.
      *
-     * @param activity         The selected activity
+     * @param activity         The selected activity profile (preset ActivityType or custom)
      * @param averageDb        Average estimated dB over the measurement period
      * @param peakDb           Maximum dB spike observed
      * @param minimumDb        Minimum dB observed
      * @param stabilityPercent 0–100, where 100 = perfectly stable (no spikes)
      * @param loudTimePercent  Percentage of time in Loud/VeryLoud range (0–100)
      * @param samples          Optional list of samples for distribution calculation
+     * @param soundCharacter   Acoustic frequency distribution (Speech, HVAC, Clatter, Balanced)
      */
     fun calculate(
-        activity: ActivityType,
+        activity: ActivityProfile,
         averageDb: Float,
         peakDb: Float,
         minimumDb: Float,
         stabilityPercent: Float,
         loudTimePercent: Float,
-        samples: List<Float> = emptyList()
+        samples: List<Float> = emptyList(),
+        soundCharacter: com.khatibstudio.noyza.audio.SoundCharacter = com.khatibstudio.noyza.audio.SoundCharacter.BALANCED
     ): SuitabilityResult {
 
         // ── Component 1: Average noise suitability (40%) ──────────────────────
@@ -62,7 +65,9 @@ class SuitabilityEngine @Inject constructor() {
         val rawScore = (avgScore * 0.40f) + (stabilityScore * 0.25f) +
                 (peakScore * 0.20f) + (sustainedScore * 0.15f)
 
-        val finalScore = rawScore.toInt().coerceIn(0, 100)
+        // ── Frequency-aware psychoacoustic adjustment ─────────────────────────
+        val freqAdjustment = calculateFrequencyAdjustment(soundCharacter, activity)
+        val finalScore = (rawScore + freqAdjustment).toInt().coerceIn(0, 100)
         val state = SuitabilityState.fromScore(finalScore)
 
         // ── Distribution calculation ──────────────────────────────────────────
@@ -77,20 +82,82 @@ class SuitabilityEngine @Inject constructor() {
             activity = activity,
             recommendation = recommendationType(finalScore),
             headline = buildHeadline(finalScore, state, activity),
-            description = buildDescription(finalScore, state, activity, averageDb, stabilityPercent),
+            description = buildDescription(finalScore, state, activity, averageDb, stabilityPercent, soundCharacter),
             stabilityPercent = stabilityPercent,
             quietPercent = distribution.first,
             moderatePercent = distribution.second,
             loudPercent = distribution.third,
-            veryLoudPercent = distribution.fourth
+            veryLoudPercent = distribution.fourth,
+            soundCharacter = soundCharacter
         )
+    }
+
+    /**
+     * Psychoacoustic frequency adjustment:
+     * - Speech (250-4000 Hz) causes phonological cognitive interference. Strongly penalized for Study/Deep Work/Reading/Recording/Sleep.
+     * - Low hum (HVAC <250 Hz) provides acoustic masking; steady low drone is tolerated better than speech.
+     * - High clatter (>4000 Hz) causes startle responses, penalizing Sleep/Relaxation/Recording.
+     */
+    private fun calculateFrequencyAdjustment(
+        soundCharacter: com.khatibstudio.noyza.audio.SoundCharacter,
+        activity: ActivityProfile
+    ): Float {
+        if (activity is ActivityType) {
+            return when (soundCharacter) {
+                com.khatibstudio.noyza.audio.SoundCharacter.SPEECH_HEAVY -> {
+                    when (activity) {
+                        ActivityType.STUDY,
+                        ActivityType.DEEP_WORK,
+                        ActivityType.READING,
+                        ActivityType.RECORDING,
+                        ActivityType.SLEEP -> -10f
+                        ActivityType.RELAX,
+                        ActivityType.FOCUS -> -6f
+                        ActivityType.CONVERSATION,
+                        ActivityType.MEETING,
+                        ActivityType.EXERCISE -> +2f
+                    }
+                }
+                com.khatibstudio.noyza.audio.SoundCharacter.LOW_RUMBLE -> {
+                    when (activity) {
+                        ActivityType.STUDY,
+                        ActivityType.DEEP_WORK,
+                        ActivityType.FOCUS -> +4f
+                        ActivityType.RECORDING,
+                        ActivityType.SLEEP -> -4f
+                        else -> 0f
+                    }
+                }
+                com.khatibstudio.noyza.audio.SoundCharacter.SHARP_CLATTER -> {
+                    when (activity) {
+                        ActivityType.RECORDING,
+                        ActivityType.SLEEP,
+                        ActivityType.RELAX -> -10f
+                        ActivityType.STUDY,
+                        ActivityType.DEEP_WORK,
+                        ActivityType.READING,
+                        ActivityType.FOCUS -> -7f
+                        else -> -2f
+                    }
+                }
+                com.khatibstudio.noyza.audio.SoundCharacter.BALANCED -> 0f
+            }
+        } else {
+            // General frequency adjustment for custom activity profiles
+            return when (soundCharacter) {
+                com.khatibstudio.noyza.audio.SoundCharacter.SPEECH_HEAVY -> -8f * activity.spikeSensitivity
+                com.khatibstudio.noyza.audio.SoundCharacter.SHARP_CLATTER -> -6f * activity.spikeSensitivity
+                com.khatibstudio.noyza.audio.SoundCharacter.LOW_RUMBLE -> +2f
+                com.khatibstudio.noyza.audio.SoundCharacter.BALANCED -> 0f
+            }
+        }
     }
 
     /**
      * Score how well the average dB fits the activity's ideal range.
      * Returns 0–100.
      */
-    private fun scoreAverageNoise(averageDb: Float, activity: ActivityType): Float {
+    private fun scoreAverageNoise(averageDb: Float, activity: ActivityProfile): Float {
         return when {
             averageDb < activity.idealMinDb -> {
                 // Below ideal minimum — for most activities this is still good (quieter is better)
@@ -141,7 +208,7 @@ class SuitabilityEngine @Inject constructor() {
     /**
      * Score peak behavior. A single loud spike should reduce score.
      */
-    private fun scorePeakNoise(peakDb: Float, activity: ActivityType): Float {
+    private fun scorePeakNoise(peakDb: Float, activity: ActivityProfile): Float {
         return when {
             peakDb <= activity.idealMaxDb -> 100f
             peakDb <= activity.acceptableMaxDb -> {
@@ -172,7 +239,7 @@ class SuitabilityEngine @Inject constructor() {
         else -> RecommendationType.NOT_IDEAL
     }
 
-    private fun buildHeadline(score: Int, state: SuitabilityState, activity: ActivityType): String {
+    private fun buildHeadline(score: Int, state: SuitabilityState, activity: ActivityProfile): String {
         return when (state) {
             SuitabilityState.EXCELLENT -> "Excellent for ${activity.displayName.lowercase()}"
             SuitabilityState.GOOD -> "Good place to ${activity.displayName.lowercase()}"
@@ -185,9 +252,10 @@ class SuitabilityEngine @Inject constructor() {
     private fun buildDescription(
         score: Int,
         state: SuitabilityState,
-        activity: ActivityType,
+        activity: ActivityProfile,
         averageDb: Float,
-        stabilityPercent: Float
+        stabilityPercent: Float,
+        soundCharacter: com.khatibstudio.noyza.audio.SoundCharacter = com.khatibstudio.noyza.audio.SoundCharacter.BALANCED
     ): String {
         val stability = when {
             stabilityPercent >= 90f -> "very stable"
@@ -196,17 +264,29 @@ class SuitabilityEngine @Inject constructor() {
             else -> "quite variable"
         }
 
+        val characterContext = when (soundCharacter) {
+            com.khatibstudio.noyza.audio.SoundCharacter.SPEECH_HEAVY ->
+                if (activity in listOf(ActivityType.STUDY, ActivityType.DEEP_WORK, ActivityType.READING, ActivityType.RECORDING) || activity.spikeSensitivity >= 0.8f)
+                    " Frequent human speech detected, which may increase cognitive distraction."
+                else ""
+            com.khatibstudio.noyza.audio.SoundCharacter.LOW_RUMBLE ->
+                " Steady low-frequency ambient hum."
+            com.khatibstudio.noyza.audio.SoundCharacter.SHARP_CLATTER ->
+                " Sharp intermittent noise spikes present."
+            com.khatibstudio.noyza.audio.SoundCharacter.BALANCED -> ""
+        }
+
         return when (state) {
             SuitabilityState.EXCELLENT ->
-                "Low and $stability background noise. Great environment for ${activity.displayName.lowercase()}."
+                "Low and $stability background noise. Great environment for ${activity.displayName.lowercase()}.$characterContext"
             SuitabilityState.GOOD ->
-                "The environment is $stability and mostly within a good range for ${activity.displayName.lowercase()}."
+                "The environment is $stability and mostly within a good range for ${activity.displayName.lowercase()}.$characterContext"
             SuitabilityState.MODERATE ->
-                "Noise is acceptable but $stability. You may notice occasional distractions."
+                "Noise is acceptable but $stability.$characterContext You may notice occasional distractions."
             SuitabilityState.POOR ->
-                "Noise levels are higher than ideal for ${activity.displayName.lowercase()}. Consider finding a quieter spot."
+                "Noise levels are higher than ideal for ${activity.displayName.lowercase()}.$characterContext Consider finding a quieter spot."
             SuitabilityState.NOT_RECOMMENDED ->
-                "This environment may make ${activity.displayName.lowercase()} significantly more difficult."
+                "This environment may make ${activity.displayName.lowercase()} significantly more difficult.$characterContext"
         }
     }
 

@@ -19,9 +19,10 @@ import com.khatibstudio.noyza.domain.model.SuitabilityResult
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuickMeasureSheet(
-    activity: ActivityType,
+    activity: com.khatibstudio.noyza.domain.model.ActivityProfile,
     result: Triple<SuitabilityResult, Float, Float>?,
     isLoading: Boolean,
+    soundProfile: com.khatibstudio.noyza.audio.SoundProfile? = null,
     onDismiss: () -> Unit,
     onSavePlace: () -> Unit,
     onMeasureAgain: () -> Unit
@@ -141,6 +142,11 @@ fun QuickMeasureSheet(
                     ),
                     textAlign = TextAlign.Center
                 )
+
+                if (soundProfile != null) {
+                    Spacer(Modifier.height(16.dp))
+                    FrequencyProfileBar(soundProfile = soundProfile)
+                }
 
                 Spacer(Modifier.height(24.dp))
 

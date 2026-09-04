@@ -21,7 +21,9 @@ data class ProfileUiState(
     val calibrationOffset: Float = 0f,
     val notifHighNoise: Boolean = true,
     val notifDailySummary: Boolean = false,
-    val isPremium: Boolean = false
+    val isPremium: Boolean = false,
+    val hapticAlertsEnabled: Boolean = true,
+    val sensoryFriendlyMode: Boolean = false
 )
 
 @HiltViewModel
@@ -43,7 +45,17 @@ class ProfileViewModel @Inject constructor(
                 preferences.notifDailySummary,
                 preferences.isPremium
             ) { activity, cal, noise, daily, premium ->
-                ProfileUiState(activity, cal, noise, daily, premium)
+                ProfileUiState(
+                    defaultActivity = activity,
+                    calibrationOffset = cal,
+                    notifHighNoise = noise,
+                    notifDailySummary = daily,
+                    isPremium = premium
+                )
+            }.combine(preferences.hapticAlertsEnabled) { state, haptics ->
+                state.copy(hapticAlertsEnabled = haptics)
+            }.combine(preferences.sensoryFriendlyMode) { state, sensory ->
+                state.copy(sensoryFriendlyMode = sensory)
             }.collect { state -> _uiState.value = state }
         }
     }
@@ -54,6 +66,14 @@ class ProfileViewModel @Inject constructor(
 
     fun setNotifDailySummary(enabled: Boolean) = viewModelScope.launch {
         preferences.setNotifDailySummary(enabled)
+    }
+
+    fun setHapticAlertsEnabled(enabled: Boolean) = viewModelScope.launch {
+        preferences.setHapticAlertsEnabled(enabled)
+    }
+
+    fun setSensoryFriendlyMode(enabled: Boolean) = viewModelScope.launch {
+        preferences.setSensoryFriendlyMode(enabled)
     }
 
     fun deleteAllData() = viewModelScope.launch {

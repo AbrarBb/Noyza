@@ -3,6 +3,7 @@ package com.khatibstudio.noyza.domain.model
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.khatibstudio.noyza.audio.SoundCharacter
 import com.khatibstudio.noyza.domain.model.ActivityType
 import com.khatibstudio.noyza.domain.model.NoiseLevel
 import com.khatibstudio.noyza.domain.model.SuitabilityState
@@ -20,7 +21,8 @@ data class MeasurementState(
     val noiseLevel: NoiseLevel = NoiseLevel.QUIET,
     val isActive: Boolean = false,
     val durationSeconds: Long = 0L,
-    val sampleCount: Int = 0
+    val sampleCount: Int = 0,
+    val soundCharacter: SoundCharacter = SoundCharacter.BALANCED
 )
 
 /**
@@ -29,7 +31,7 @@ data class MeasurementState(
 data class SuitabilityResult(
     val score: Int = 0,                    // 0–100
     val state: SuitabilityState = SuitabilityState.MODERATE,
-    val activity: ActivityType = ActivityType.STUDY,
+    val activity: ActivityProfile = ActivityType.STUDY,
     val recommendation: RecommendationType = RecommendationType.RECOMMENDED,
     val headline: String = "",
     val description: String = "",
@@ -37,7 +39,8 @@ data class SuitabilityResult(
     val quietPercent: Float = 0f,
     val moderatePercent: Float = 0f,
     val loudPercent: Float = 0f,
-    val veryLoudPercent: Float = 0f
+    val veryLoudPercent: Float = 0f,
+    val soundCharacter: SoundCharacter = SoundCharacter.BALANCED
 )
 
 /**

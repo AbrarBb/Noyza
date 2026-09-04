@@ -47,6 +47,10 @@ class NoyZaPreferences @Inject constructor(
 
         // Theme
         val USE_DARK_THEME = booleanPreferencesKey("use_dark_theme")
+
+        // Accessibility & Sensory
+        val HAPTIC_ALERTS_ENABLED = booleanPreferencesKey("haptic_alerts_enabled")
+        val SENSORY_FRIENDLY_MODE = booleanPreferencesKey("sensory_friendly_mode")
     }
 
     private val dataStore = context.dataStore
@@ -167,6 +171,24 @@ class NoyZaPreferences @Inject constructor(
             val current = it[ACTION_COUNT_SINCE_AD] ?: 0
             it[ACTION_COUNT_SINCE_AD] = current + 1
         }
+    }
+
+    // ─── Accessibility & Sensory ─────────────────────────────────────────────
+
+    val hapticAlertsEnabled: Flow<Boolean> = dataStore.data
+        .catchIOException()
+        .map { it[HAPTIC_ALERTS_ENABLED] ?: true }
+
+    val sensoryFriendlyMode: Flow<Boolean> = dataStore.data
+        .catchIOException()
+        .map { it[SENSORY_FRIENDLY_MODE] ?: false }
+
+    suspend fun setHapticAlertsEnabled(enabled: Boolean) {
+        dataStore.edit { it[HAPTIC_ALERTS_ENABLED] = enabled }
+    }
+
+    suspend fun setSensoryFriendlyMode(enabled: Boolean) {
+        dataStore.edit { it[SENSORY_FRIENDLY_MODE] = enabled }
     }
 
     // ─── Utilities ────────────────────────────────────────────────────────────

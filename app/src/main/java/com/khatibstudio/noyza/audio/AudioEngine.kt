@@ -65,14 +65,20 @@ class AudioEngine @Inject constructor(
     private var audioRecord: AudioRecord? = null
     private var isRecording = false
 
+    private val fftProcessor = FftAudioProcessor(sampleRate = SAMPLE_RATE, fftSize = 1024)
+
     private val _rawDbFlow = MutableStateFlow(MIN_DB)
     private val _smoothedDbFlow = MutableStateFlow(MIN_DB)
+    private val _soundProfileFlow = MutableStateFlow(SoundProfile())
 
     /** Smoothed, calibrated dB reading. Use this for UI display. */
     val smoothedDb: Flow<Float> = _smoothedDbFlow.asStateFlow()
 
     /** Raw (unsmoothed) dB reading. Useful for peak detection. */
     val rawDb: Flow<Float> = _rawDbFlow.asStateFlow()
+
+    /** Real-time frequency band analysis & sound character classification. */
+    val soundProfile: Flow<SoundProfile> = _soundProfileFlow.asStateFlow()
 
     private var smoothedValue = MIN_DB
     private var calibrationOffset = 0f
@@ -135,6 +141,10 @@ class AudioEngine @Inject constructor(
 
                     _rawDbFlow.value = calibratedRaw
                     _smoothedDbFlow.value = calibratedSmoothed
+
+                    // Run FFT spectral analysis
+                    val profile = fftProcessor.process(buffer, readCount)
+                    _soundProfileFlow.value = profile
                 }
             }
         } catch (e: SecurityException) {
@@ -156,6 +166,7 @@ class AudioEngine @Inject constructor(
         // Reset to floor value
         _smoothedDbFlow.value = MIN_DB
         _rawDbFlow.value = MIN_DB
+        _soundProfileFlow.value = SoundProfile()
         smoothedValue = MIN_DB
     }
 

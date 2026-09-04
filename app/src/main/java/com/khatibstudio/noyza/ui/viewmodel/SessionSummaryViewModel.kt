@@ -45,13 +45,22 @@ class SessionSummaryViewModel @Inject constructor(
         }
     }
 
-    fun savePlace(sessionId: Long, name: String, category: PlaceCategory, notes: String) {
+    fun savePlace(
+        sessionId: Long,
+        name: String,
+        category: PlaceCategory,
+        notes: String,
+        latitude: Double? = null,
+        longitude: Double? = null
+    ) {
         viewModelScope.launch {
             val session = _uiState.value.session ?: return@launch
             val place = Place(
                 name = name,
                 category = category,
                 notes = notes,
+                latitude = latitude,
+                longitude = longitude,
                 averageDb = session.averageDb,
                 bestSuitabilityScore = session.suitabilityScore,
                 measurementCount = 1,

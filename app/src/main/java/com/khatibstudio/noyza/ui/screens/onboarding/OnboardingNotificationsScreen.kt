@@ -161,7 +161,7 @@ fun OnboardingNotificationsScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        OnboardingPageIndicator(currentPage = 3, totalPages = 4)
+        OnboardingPageIndicator(currentPage = 4, totalPages = 5)
 
         Spacer(Modifier.height(16.dp))
     }

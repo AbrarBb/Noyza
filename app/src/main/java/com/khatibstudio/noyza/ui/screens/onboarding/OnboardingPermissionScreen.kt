@@ -166,7 +166,7 @@ fun OnboardingPermissionScreen(navController: NavController) {
                         Button(
                             onClick = {
                                 if (micPermission.status.isGranted) {
-                                    navController.navigate(Screen.OnboardingActivity.route)
+                                    navController.navigate(Screen.OnboardingCalibration.route)
                                 } else {
                                     micPermission.launchPermissionRequest()
                                 }
@@ -205,11 +205,11 @@ fun OnboardingPermissionScreen(navController: NavController) {
 
                 LaunchedEffect(micPermission.status) {
                     if (micPermission.status.isGranted) {
-                        navController.navigate(Screen.OnboardingActivity.route)
+                        navController.navigate(Screen.OnboardingCalibration.route)
                     }
                 }
 
-                OnboardingPageIndicator(currentPage = 1, totalPages = 4)
+                OnboardingPageIndicator(currentPage = 1, totalPages = 5)
             }
         }
     }

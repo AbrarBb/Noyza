@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.khatibstudio.noyza.ui.components.BestTimeToVisitCard
 import com.khatibstudio.noyza.ui.navigation.Screen
 import com.khatibstudio.noyza.ui.viewmodel.AnalyticsViewModel
 
@@ -120,6 +121,12 @@ fun AnalyticsScreen(
             }
 
             Spacer(Modifier.height(16.dp))
+
+            // Quiet Hours & Optimal Time Forecast
+            uiState.scheduleForecast?.let { forecast ->
+                BestTimeToVisitCard(forecast = forecast)
+                Spacer(Modifier.height(16.dp))
+            }
 
             // Premium locked: Noise by Place chart
             Card(

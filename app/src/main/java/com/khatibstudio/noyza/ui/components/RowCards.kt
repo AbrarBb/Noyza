@@ -121,7 +121,8 @@ fun SessionSummaryRowCard(
 fun PlaceRowCard(
     place: Place,
     onClick: () -> Unit,
-    rankNumber: Int? = null
+    rankNumber: Int? = null,
+    distanceLabel: String? = null
 ) {
     Card(
         modifier = Modifier
@@ -184,7 +185,25 @@ fun PlaceRowCard(
                     text = place.name,
                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (distanceLabel != null) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text(
+                                text = distanceLabel,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
                     if (place.averageDb > 0) {
                         Text(
                             text = "${place.averageDb.toInt()} dB avg",

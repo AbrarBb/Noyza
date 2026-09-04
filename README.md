@@ -37,17 +37,23 @@ Noyza measures surrounding ambient sound using the device microphone in real-tim
 ### 1. Real-Time Noise Measurement & Smart Gauge
 - **Acoustic Pipeline:** Real-time PCM audio capture using `AudioRecord` $\rightarrow$ Root Mean Square (RMS) calculation $\rightarrow$ estimated decibel (dB) output.
 - **Exponential Smoothing:** Exponential moving average algorithm ($\alpha = 0.15$) for responsive, flutter-free gauge animation.
-- **Microphone Calibration:** Adjustable calibration slider ($-10\text{ dB}$ to $+10\text{ dB}$) with 5 quick presets (Quiet Room, Modern Office, Smartphone Mic, Headset, Factory Default).
 - **Dynamic Circular Gauge:** Smooth Canvas-drawn circular gauge with responsive gradient arcs reflecting the live sound environment.
 
-### 2. Activity-Based Suitability Engine
-Noyza calculates environment suitability through a 4-component weighted heuristic:
-* **40% Average Noise Suitability:** Closeness to ideal dB range for the chosen activity.
+### 2. Frequency-Aware Audio Analysis & Psychoacoustics
+- **Pure-Kotlin 1024-point Radix-2 FFT:** In-memory spectral decomposition splitting audio into Low (20–250 Hz), Mid (250–4000 Hz), and High (4000–12000 Hz) bands with Hanning windowing.
+- **Sound Character Classification:** Automatically categorizes the acoustic fingerprint into *Balanced Ambient*, *Speech & Voices*, *HVAC & Low Hum*, or *Sharp Clatter*.
+- **Cognitive Disruption Weighting:** Intelligently penalizes intelligible human speech for focus and study activities, while providing masking credit for steady low-frequency background hum.
+- **Live 3-Band Spectral Bar:** Visual real-time frequency distribution bar with character badges in quick measure and active session screens.
+
+### 3. Activity-Based Suitability Engine & Custom Profiles
+Noyza calculates environment suitability through a multi-factor weighted psychoacoustic heuristic:
+* **40% Noise Amplitude Suitability:** Closeness to ideal dB range for the chosen activity.
 * **25% Noise Stability:** Standard deviation and variance penalty for fluctuating environments.
 * **20% Peak Noise Behavior:** Impact of sudden loud spikes.
 * **15% Sustained Exposure:** Duration spent in loud or very loud thresholds.
+* **Spectral Bias Adjustment:** Psychoacoustic cognitive penalty/bonus based on frequency profile.
 
-#### 10 Built-In Activity Profiles
+#### 10 Built-In Activity Profiles & Unlimited Custom Activities
 | Activity | Icon | Ideal Range | Acceptable Max | Description |
 |---|:---:|:---:|:---:|---|
 | **Study** | School | 35 – 55 dB | 70 dB | Focused academic study and exam prep |
@@ -61,36 +67,44 @@ Noyza calculates environment suitability through a 4-component weighted heuristi
 | **Conversation** | Forum | 50 – 70 dB | 80 dB | Casual conversations and coffee chats |
 | **Exercise** | FitnessCenter | 55 – 80 dB | 90 dB | Workouts and physical fitness |
 
-### 3. Quick Measure & Active Session Tracking
+- **Custom Activity Creator:** Create tailored activity profiles with customizable Ideal Min/Max dB, Acceptable Max dB, Spike Sensitivity, and Material icons—stored directly in Room DB.
+
+### 4. Predictive Noise Forecasting ("Best Time to Visit")
+- **Bayesian Diurnal Model:** Blends empirical historical measurements with a diurnal urban baseline prior across 24 hourly slots.
+- **Best Time to Visit Card:** Shows the location's quietest window (e.g. *9:00 AM – 11:30 AM*), peak distraction hours, and a full 24-hour visual noise heat chart.
+- **Cross-Screen Integration:** Available on both individual Place Detail screens and the Weekly Analytics dashboard.
+
+### 5. Location Tagging & GPS Proximity
+- **GPS Coordinates Storage:** One-tap GPS tagging when saving places with instant latitude and longitude capture.
+- **Distance Calculation:** Haversine distance computation displaying real-time proximity badges (*450 m*, *1.8 km*).
+- **Nearby Sorting:** Instant sorting of saved study and focus spots by distance.
+
+### 6. Guided Microphone Calibration & Baseline Setup
+- **Hardware Variance Compensation:** Accounts for manufacturer microphone gain differences (Samsung, Pixel, Xiaomi, etc.).
+- **3-Second Ambient Room Check:** Interactive live baseline test with animated pulse meter and real-time progress bar.
+- **Quick Baseline Presets:** One-tap calibration (*Quiet Library ~35 dB*, *Normal Room ~45 dB*, *Active Space ~55 dB*, *Standard 0 dB*) with fine-tuning slider ($-10\text{ dB}$ to $+10\text{ dB}$).
+
+### 7. Accessibility & Sensory-Friendly Mode
+- **Haptic Spike Alerts:** Discrete vibration feedback on sudden noise spikes for deaf, hard-of-hearing, or neurodivergent users.
+- **Sensory-Friendly Mode:** High-contrast, gentle visual options reducing sensory fatigue.
+- **TalkBack Semantics:** Complete semantic descriptions for gauges, frequency bars, and calibration controls.
+
+### 8. Quick Measure & Active Session Tracking
 - **Quick Measure:** 10–30 second rapid assessment bottom sheet with instant recommendation.
 - **Active Session Mode:** Full-screen measurement with foreground service (`MeasurementService`), live cubic-bezier Canvas noise graph, orange spike detection markers, and 65 dB reference line.
 - **High-Noise Alerts:** Real-time push notifications when noise exceeds the acceptable threshold for 3+ minutes.
 - **Session Summary:** Comprehensive post-measurement report with average/peak/minimum dB, stability score, percentage distribution breakdown (*Quiet*, *Moderate*, *Loud*, *Very Loud*), and one-tap **Save Place** dialog.
 
-### 4. Saved Places & Exploration
-- **Explore Screen:** Ranked list of saved places with #1, #2, #3 badges and quick filters (*Best Overall*, *Quietest*, *Most Stable*, *Category*).
-- **Place Detail & Compatibility Matrix:** Visual acoustic compatibility matrix rating the location across **all 10 activities** simultaneously (e.g. Study 94%, Deep Work 91%, Reading 96%).
+### 9. Saved Places, History & Analytics
+- **Explore Screen:** Ranked list of saved places with #1, #2, #3 badges and filters (*Best Overall*, *Quietest*, *Most Stable*, *Nearby*, *Category*).
+- **Place Detail & Compatibility Matrix:** Visual acoustic compatibility matrix rating the location across all activities simultaneously.
 - **Place Comparison:** Side-by-side comparison of multiple saved spots to decide the optimal working or resting location.
-
-### 5. History & Analytics
-- **Grouped Session History:** Date-grouped session logs (*Today*, *Yesterday*, past dates) with activity icons, scores, and duration.
-- **7-Day Analytics:** Weekly average dB, environment suitability scores, best day vs. noisiest day, and noise trends by location.
+- **7-Day Analytics:** Weekly average dB, environment suitability scores, best day vs. noisiest day, and predictive quiet hours.
 - **Data Privacy & Export:** Instant CSV export of all recorded session data via Android `FileProvider` and one-tap total data wipe.
 
-### 6. Jetpack Glance Home Screen Widget
-- Compact home screen widget showing live estimated noise level and activity suitability status.
-- One-tap quick launch into measurement mode.
-
-### 7. Monetization & Premium Architecture
-- **AdMob Integration:** Centralized `AdManager` with banner, interstitial, and native ad support.
-  - Frequency-capped interstitial transitions.
-  - **Zero ads during active noise measurement** (guaranteed non-distracting user experience).
-- **Google Play Billing 7.x:** Fully scaffolded `BillingManager` supporting:
-  - Monthly Subscription
-  - Annual Subscription (*Best Value*)
-  - Lifetime Purchase
-  - One-time "Remove Ads" option
-  - Instant purchase restoration
+### 10. Monetization & Premium Architecture
+- **AdMob Integration:** Centralized `AdManager` with banner, interstitial, and native ad support. Zero ads during active measurement.
+- **Google Play Billing 7.x:** Fully scaffolded `BillingManager` supporting subscriptions and lifetime unlock.
 
 ---
 

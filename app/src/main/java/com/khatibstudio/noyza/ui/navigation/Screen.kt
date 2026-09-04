@@ -7,6 +7,7 @@ sealed class Screen(val route: String) {
     // ─── Onboarding ──────────────────────────────────────────────────────────
     object OnboardingWelcome : Screen("onboarding_welcome")
     object OnboardingPermission : Screen("onboarding_permission")
+    object OnboardingCalibration : Screen("onboarding_calibration")
     object OnboardingActivity : Screen("onboarding_activity")
     object OnboardingNotifications : Screen("onboarding_notifications")
 

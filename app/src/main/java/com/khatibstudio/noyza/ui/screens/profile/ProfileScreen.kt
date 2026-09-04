@@ -120,6 +120,22 @@ fun ProfileScreen(
             )
         }
 
+        // ─── Accessibility & Sensory ───────────────────────────────────────
+        ProfileSection(title = "Accessibility & Sensory") {
+            ProfileToggleRow(
+                icon = Icons.Outlined.Vibration,
+                title = "Haptic Spike Alerts",
+                checked = uiState.hapticAlertsEnabled,
+                onCheckedChange = { viewModel.setHapticAlertsEnabled(it) }
+            )
+            ProfileToggleRow(
+                icon = Icons.Outlined.AccessibilityNew,
+                title = "Sensory-Friendly Mode",
+                checked = uiState.sensoryFriendlyMode,
+                onCheckedChange = { viewModel.setSensoryFriendlyMode(it) }
+            )
+        }
+
         // ─── Data ─────────────────────────────────────────────────────────
         ProfileSection(title = "Data") {
             ProfileSettingRow(

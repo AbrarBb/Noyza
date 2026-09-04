@@ -252,6 +252,14 @@ fun ActiveSessionScreen(
                 )
 
                 Spacer(Modifier.height(16.dp))
+
+                // Frequency-aware sound character analysis
+                FrequencyProfileBar(
+                    soundProfile = uiState.soundProfile,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                Spacer(Modifier.height(16.dp))
             }
 
             // Bottom controls — Lesson from Cyvia: wrap in nav padding

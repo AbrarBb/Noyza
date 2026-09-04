@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.khatibstudio.noyza.data.preferences.NoyZaPreferences
 import com.khatibstudio.noyza.data.repository.SessionRepository
+import com.khatibstudio.noyza.domain.engine.NoiseForecastingEngine
+import com.khatibstudio.noyza.domain.engine.PlaceScheduleForecast
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -17,13 +19,15 @@ data class AnalyticsUiState(
     val bestDay: String = "",
     val noisiestDay: String = "",
     val todayScore: Int = 0,
-    val isPremium: Boolean = false
+    val isPremium: Boolean = false,
+    val scheduleForecast: PlaceScheduleForecast? = null
 )
 
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
-    private val preferences: NoyZaPreferences
+    private val preferences: NoyZaPreferences,
+    private val forecastingEngine: NoiseForecastingEngine
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AnalyticsUiState())
@@ -55,12 +59,15 @@ class AnalyticsViewModel @Inject constructor(
                     .average()
                     .let { if (it.isNaN()) 0 else it.toInt() }
 
+                val forecast = forecastingEngine.forecastForSessions(sessions)
+
                 _uiState.update { it.copy(
                     avgDb = avgDb,
                     avgSuitability = avgSuit,
                     bestDay = bestDay,
                     noisiestDay = noisiestDay,
-                    todayScore = todayScore
+                    todayScore = todayScore,
+                    scheduleForecast = forecast
                 )}
             }
         }

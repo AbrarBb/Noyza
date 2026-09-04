@@ -37,4 +37,8 @@ object DatabaseModule {
 
     @Provides
     fun provideNoiseSampleDao(db: NoyZaDatabase): NoiseSampleDao = db.noiseSampleDao()
+
+    @Provides
+    fun provideCustomActivityDao(db: NoyZaDatabase): com.khatibstudio.noyza.data.local.dao.CustomActivityDao =
+        db.customActivityDao()
 }

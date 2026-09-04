@@ -100,7 +100,7 @@ fun OnboardingActivityScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                OnboardingPageIndicator(currentPage = 2, totalPages = 4)
+                OnboardingPageIndicator(currentPage = 3, totalPages = 5)
 
                 Spacer(Modifier.height(16.dp))
             }

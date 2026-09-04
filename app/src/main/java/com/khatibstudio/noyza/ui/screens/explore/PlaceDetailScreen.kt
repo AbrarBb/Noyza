@@ -19,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.khatibstudio.noyza.domain.model.ActivityType
 import com.khatibstudio.noyza.domain.model.SuitabilityState
+import com.khatibstudio.noyza.ui.components.BestTimeToVisitCard
 import com.khatibstudio.noyza.ui.components.scoreStateColor
 import com.khatibstudio.noyza.ui.screens.session.SessionLiveGraph
 import com.khatibstudio.noyza.ui.viewmodel.PlaceDetailViewModel
@@ -119,6 +120,12 @@ fun PlaceDetailScreen(
             }
 
             Spacer(Modifier.height(16.dp))
+
+            // Predictive Best Time to Visit Forecast
+            uiState.scheduleForecast?.let { forecast ->
+                BestTimeToVisitCard(forecast = forecast)
+                Spacer(Modifier.height(16.dp))
+            }
 
             // Noise history graph
             if (uiState.samples.isNotEmpty()) {

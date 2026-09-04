@@ -5,19 +5,33 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
- * Represents all available activities in Noyza.
+ * Common abstraction for built-in and user-customized activity noise profiles.
+ */
+interface ActivityProfile {
+    val displayName: String
+    val idealMinDb: Float
+    val idealMaxDb: Float
+    val acceptableMaxDb: Float
+    val poorThresholdDb: Float
+    val spikeSensitivity: Float
+    val stabilitySensitivity: Float
+    val icon: ImageVector
+}
+
+/**
+ * Represents all available built-in activities in Noyza.
  * Each activity has defined dB thresholds for scoring and an associated Material icon.
  */
 enum class ActivityType(
-    val displayName: String,
+    override val displayName: String,
     val description: String,
-    val idealMinDb: Float,
-    val idealMaxDb: Float,
-    val acceptableMaxDb: Float,
-    val poorThresholdDb: Float,
-    val spikeSensitivity: Float,   // 0.0 (low) to 1.0 (high)
-    val stabilitySensitivity: Float // 0.0 (low) to 1.0 (high)
-) {
+    override val idealMinDb: Float,
+    override val idealMaxDb: Float,
+    override val acceptableMaxDb: Float,
+    override val poorThresholdDb: Float,
+    override val spikeSensitivity: Float,   // 0.0 (low) to 1.0 (high)
+    override val stabilitySensitivity: Float // 0.0 (low) to 1.0 (high)
+) : ActivityProfile {
     STUDY(
         displayName = "Study",
         description = "Focused academic study",
@@ -119,7 +133,7 @@ enum class ActivityType(
         stabilitySensitivity = 0.2f
     );
 
-    val icon: ImageVector
+    override val icon: ImageVector
         get() = when (this) {
             STUDY -> Icons.Outlined.School
             DEEP_WORK -> Icons.Outlined.Laptop
@@ -137,6 +151,38 @@ enum class ActivityType(
         fun fromName(name: String): ActivityType =
             entries.firstOrNull { it.name == name } ?: STUDY
     }
+}
+
+/**
+ * User-defined activity noise profile with custom thresholds and icon.
+ */
+data class CustomActivityProfile(
+    val id: Long = 0L,
+    override val displayName: String,
+    val iconName: String = "Star",
+    override val idealMinDb: Float = 35f,
+    override val idealMaxDb: Float = 55f,
+    override val acceptableMaxDb: Float = 70f,
+    override val poorThresholdDb: Float = acceptableMaxDb + 10f,
+    override val spikeSensitivity: Float = 0.8f,
+    override val stabilitySensitivity: Float = 0.85f
+) : ActivityProfile {
+    override val icon: ImageVector
+        get() = resolveActivityIcon(iconName)
+}
+
+fun resolveActivityIcon(iconName: String): ImageVector = when (iconName.lowercase()) {
+    "piano", "music" -> Icons.Outlined.MusicNote
+    "brush", "art" -> Icons.Outlined.Brush
+    "headset", "headphones" -> Icons.Outlined.Headphones
+    "mic", "microphone" -> Icons.Outlined.Mic
+    "bed", "sleep" -> Icons.Outlined.Bedtime
+    "meditation", "relax" -> Icons.Outlined.SelfImprovement
+    "laptop", "work" -> Icons.Outlined.Laptop
+    "book", "reading" -> Icons.Outlined.MenuBook
+    "school", "study" -> Icons.Outlined.School
+    "fitness", "gym" -> Icons.Outlined.FitnessCenter
+    else -> Icons.Outlined.Star
 }
 
 /**

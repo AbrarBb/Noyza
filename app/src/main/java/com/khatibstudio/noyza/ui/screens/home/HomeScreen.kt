@@ -22,6 +22,7 @@ import androidx.navigation.NavController
 import com.khatibstudio.noyza.domain.model.*
 import com.khatibstudio.noyza.ui.components.*
 import com.khatibstudio.noyza.ui.navigation.Screen
+import com.khatibstudio.noyza.ui.screens.activity.CreateCustomActivitySheet
 import com.khatibstudio.noyza.ui.viewmodel.HomeViewModel
 import java.util.Locale
 
@@ -33,6 +34,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showQuickMeasureSheet by remember { mutableStateOf(false) }
+    var showCustomActivitySheet by remember { mutableStateOf(false) }
     var quickMeasureResult by remember { mutableStateOf<Triple<SuitabilityResult, Float, Float>?>(null) }
 
     // Start/stop live monitoring based on screen visibility
@@ -41,12 +43,24 @@ fun HomeScreen(
         onDispose { viewModel.stopLiveMonitoring() }
     }
 
+    // Custom Activity creation sheet
+    if (showCustomActivitySheet) {
+        CreateCustomActivitySheet(
+            onDismiss = { showCustomActivitySheet = false },
+            onSave = { entity ->
+                viewModel.saveCustomActivity(entity)
+                showCustomActivitySheet = false
+            }
+        )
+    }
+
     // Quick Measure bottom sheet
     if (showQuickMeasureSheet) {
         QuickMeasureSheet(
             activity = uiState.selectedActivity,
             result = quickMeasureResult,
             isLoading = quickMeasureResult == null,
+            soundProfile = uiState.soundProfile,
             onDismiss = {
                 showQuickMeasureSheet = false
                 quickMeasureResult = null
@@ -82,7 +96,9 @@ fun HomeScreen(
         item {
             ActivitySelectorRow(
                 selectedActivity = uiState.selectedActivity,
-                onActivitySelected = { viewModel.selectActivity(it) }
+                customActivities = uiState.customActivities,
+                onActivitySelected = { viewModel.selectActivity(it) },
+                onAddCustomClick = { showCustomActivitySheet = true }
             )
         }
 
@@ -265,7 +281,7 @@ private fun HomeHeader(
 }
 
 @Composable
-private fun IdealRangeCard(activity: ActivityType) {
+private fun IdealRangeCard(activity: ActivityProfile) {
     Card(
         modifier = Modifier
             .fillMaxWidth()

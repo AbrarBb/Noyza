@@ -131,6 +131,9 @@ fun NoyZaApp() {
             composable(Screen.OnboardingPermission.route) {
                 OnboardingPermissionScreen(navController = navController)
             }
+            composable(Screen.OnboardingCalibration.route) {
+                OnboardingCalibrationScreen(navController = navController)
+            }
             composable(Screen.OnboardingActivity.route) {
                 OnboardingActivityScreen(navController = navController)
             }

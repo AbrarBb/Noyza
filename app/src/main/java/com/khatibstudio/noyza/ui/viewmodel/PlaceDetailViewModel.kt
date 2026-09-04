@@ -12,17 +12,22 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.khatibstudio.noyza.domain.engine.NoiseForecastingEngine
+import com.khatibstudio.noyza.domain.engine.PlaceScheduleForecast
+
 data class PlaceDetailUiState(
     val place: Place? = null,
     val samples: List<Float> = emptyList(),
-    val activityCompatibility: Map<ActivityType, Int> = emptyMap()
+    val activityCompatibility: Map<ActivityType, Int> = emptyMap(),
+    val scheduleForecast: PlaceScheduleForecast? = null
 )
 
 @HiltViewModel
 class PlaceDetailViewModel @Inject constructor(
     private val placeRepository: PlaceRepository,
     private val sessionRepository: SessionRepository,
-    private val suitabilityEngine: SuitabilityEngine
+    private val suitabilityEngine: SuitabilityEngine,
+    private val forecastingEngine: NoiseForecastingEngine
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PlaceDetailUiState())
@@ -35,10 +40,11 @@ class PlaceDetailViewModel @Inject constructor(
 
             // Load noise samples from most recent session at this place
             val sessions = sessionRepository.getSessionsByPlace(placeId).first()
+            val forecast = forecastingEngine.forecastForSessions(sessions)
+
             val latestSession = sessions.firstOrNull()
             if (latestSession != null) {
                 val samples = sessionRepository.getSamplesForSession(latestSession.id)
-                _uiState.update { it.copy(samples = samples) }
 
                 // Calculate activity compatibility using average dB
                 val avg = place.averageDb
@@ -58,7 +64,13 @@ class PlaceDetailViewModel @Inject constructor(
                     )
                     activity to result.score
                 }
-                _uiState.update { it.copy(activityCompatibility = compatibility) }
+                _uiState.update { it.copy(
+                    samples = samples,
+                    activityCompatibility = compatibility,
+                    scheduleForecast = forecast
+                )}
+            } else {
+                _uiState.update { it.copy(scheduleForecast = forecast) }
             }
         }
     }

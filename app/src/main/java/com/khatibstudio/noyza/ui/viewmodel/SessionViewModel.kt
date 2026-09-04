@@ -35,7 +35,8 @@ data class SessionUiState(
     val timeHistory: List<Long> = emptyList(),   // Timestamps for graph
     val sessionId: Long? = null,
     val showHighNoiseAlert: Boolean = false,
-    val highNoiseAlertMessage: String = ""
+    val highNoiseAlertMessage: String = "",
+    val soundProfile: com.khatibstudio.noyza.audio.SoundProfile = com.khatibstudio.noyza.audio.SoundProfile()
 )
 
 @HiltViewModel
@@ -44,7 +45,8 @@ class SessionViewModel @Inject constructor(
     private val audioEngine: AudioEngine,
     private val suitabilityEngine: SuitabilityEngine,
     private val sessionRepository: SessionRepository,
-    private val preferences: NoyZaPreferences
+    private val preferences: NoyZaPreferences,
+    private val hapticManager: com.khatibstudio.noyza.util.NoyZaHapticManager
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(SessionUiState())
@@ -109,6 +111,12 @@ class SessionViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            audioEngine.soundProfile.collect { profile ->
+                _uiState.update { it.copy(soundProfile = profile) }
+            }
+        }
+
+        viewModelScope.launch {
             audioEngine.smoothedDb.collect { db ->
                 if (!_uiState.value.isRunning || _uiState.value.isPaused) return@collect
 
@@ -138,7 +146,8 @@ class SessionViewModel @Inject constructor(
                     minimumDb = newMin,
                     stabilityPercent = stability,
                     loudTimePercent = loudTime,
-                    samples = dbSamples.takeLast(100)
+                    samples = dbSamples.takeLast(100),
+                    soundCharacter = state.soundProfile.character
                 )
 
                 _uiState.update { it.copy(
@@ -246,6 +255,7 @@ class SessionViewModel @Inject constructor(
         // Alert if score dropped significantly
         val scoreDrop = lastAlertedScore - currentScore
         if (scoreDrop >= 20 && currentScore < 70) {
+            hapticManager.vibrateNoiseSpike()
             _uiState.update { it.copy(
                 showHighNoiseAlert = true,
                 highNoiseAlertMessage = "Your suitability score dropped from $lastAlertedScore to $currentScore"
@@ -258,6 +268,7 @@ class SessionViewModel @Inject constructor(
             if (highNoiseStartTime == 0L) highNoiseStartTime = System.currentTimeMillis()
             val highNoiseDuration = (System.currentTimeMillis() - highNoiseStartTime) / 1000L
             if (highNoiseDuration >= HIGH_NOISE_ALERT_THRESHOLD_SECONDS && !state.showHighNoiseAlert) {
+                hapticManager.vibrateNoiseSpike()
                 _uiState.update { it.copy(
                     showHighNoiseAlert = true,
                     highNoiseAlertMessage = "Your environment has been above your threshold for ${HIGH_NOISE_ALERT_THRESHOLD_SECONDS / 60} minutes"

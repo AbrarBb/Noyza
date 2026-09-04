@@ -29,7 +29,7 @@ import com.khatibstudio.noyza.ui.theme.*
 @Composable
 fun SuitabilityScoreCard(
     result: SuitabilityResult,
-    activity: ActivityType,
+    activity: com.khatibstudio.noyza.domain.model.ActivityProfile,
     modifier: Modifier = Modifier
 ) {
     val animatedScore by animateIntAsState(
