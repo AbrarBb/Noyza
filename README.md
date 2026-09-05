@@ -29,7 +29,9 @@ Unlike conventional scientific decibel meters that only output cold decibel numb
 > **“Is this a good place for what I want to do?”**
 
 Noyza measures surrounding ambient sound using the device microphone in real-time, smooths variations, and evaluates acoustic suitability against 10 distinct activity profiles. It provides an intuitive **0–100 suitability score**, environment classifications, historical session tracking, ranked place comparisons, and actionable recommendations.
-
+<p align="center">
+  <img src="noyza_feature.png" width="1200" height="1200" alt="Noyza Logo" />
+</p>
 ---
 
 ## Key Features
