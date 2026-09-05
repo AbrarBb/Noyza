@@ -46,7 +46,9 @@ class SuitabilityEngine @Inject constructor() {
         stabilityPercent: Float,
         loudTimePercent: Float,
         samples: List<Float> = emptyList(),
-        soundCharacter: com.khatibstudio.noyza.audio.SoundCharacter = com.khatibstudio.noyza.audio.SoundCharacter.BALANCED
+        soundCharacter: com.khatibstudio.noyza.audio.SoundCharacter = com.khatibstudio.noyza.audio.SoundCharacter.BALANCED,
+        previousState: SuitabilityState? = null,
+        previousRecommendation: RecommendationType? = null
     ): SuitabilityResult {
 
         // ── Component 1: Average noise suitability (40%) ──────────────────────
@@ -68,7 +70,8 @@ class SuitabilityEngine @Inject constructor() {
         // ── Frequency-aware psychoacoustic adjustment ─────────────────────────
         val freqAdjustment = calculateFrequencyAdjustment(soundCharacter, activity)
         val finalScore = (rawScore + freqAdjustment).toInt().coerceIn(0, 100)
-        val state = SuitabilityState.fromScore(finalScore)
+        val state = resolveStateWithHysteresis(finalScore, previousState)
+        val recommendation = resolveRecommendationWithHysteresis(finalScore, previousRecommendation)
 
         // ── Distribution calculation ──────────────────────────────────────────
         val distribution = calculateDistribution(samples.ifEmpty {
@@ -80,7 +83,7 @@ class SuitabilityEngine @Inject constructor() {
             score = finalScore,
             state = state,
             activity = activity,
-            recommendation = recommendationType(finalScore),
+            recommendation = recommendation,
             headline = buildHeadline(finalScore, state, activity),
             description = buildDescription(finalScore, state, activity, averageDb, stabilityPercent, soundCharacter),
             stabilityPercent = stabilityPercent,
@@ -231,6 +234,44 @@ class SuitabilityEngine @Inject constructor() {
         if (loudTimePercent <= 5f) return 100f
         val penalty = (loudTimePercent - 5f) * (1.5f + sensitivity)
         return max(0f, 100f - penalty)
+    }
+
+    fun resolveStateWithHysteresis(score: Int, previousState: SuitabilityState?): SuitabilityState {
+        if (previousState == null) return SuitabilityState.fromScore(score)
+
+        return when (previousState) {
+            SuitabilityState.EXCELLENT -> if (score <= 86) SuitabilityState.fromScore(score) else SuitabilityState.EXCELLENT
+            SuitabilityState.GOOD -> when {
+                score >= 93 -> SuitabilityState.EXCELLENT
+                score <= 71 -> SuitabilityState.fromScore(score)
+                else -> SuitabilityState.GOOD
+            }
+            SuitabilityState.MODERATE -> when {
+                score >= 77 -> SuitabilityState.GOOD
+                score <= 46 -> SuitabilityState.fromScore(score)
+                else -> SuitabilityState.MODERATE
+            }
+            SuitabilityState.POOR -> when {
+                score >= 53 -> SuitabilityState.MODERATE
+                score <= 21 -> SuitabilityState.NOT_RECOMMENDED
+                else -> SuitabilityState.POOR
+            }
+            SuitabilityState.NOT_RECOMMENDED -> if (score >= 28) SuitabilityState.fromScore(score) else SuitabilityState.NOT_RECOMMENDED
+        }
+    }
+
+    fun resolveRecommendationWithHysteresis(score: Int, previous: RecommendationType?): RecommendationType {
+        if (previous == null) return recommendationType(score)
+
+        return when (previous) {
+            RecommendationType.RECOMMENDED -> if (score <= 66) RecommendationType.CONSIDER_QUIETER else RecommendationType.RECOMMENDED
+            RecommendationType.CONSIDER_QUIETER -> when {
+                score >= 73 -> RecommendationType.RECOMMENDED
+                score <= 41 -> RecommendationType.NOT_IDEAL
+                else -> RecommendationType.CONSIDER_QUIETER
+            }
+            RecommendationType.NOT_IDEAL -> if (score >= 48) RecommendationType.CONSIDER_QUIETER else RecommendationType.NOT_IDEAL
+        }
     }
 
     private fun recommendationType(score: Int): RecommendationType = when {

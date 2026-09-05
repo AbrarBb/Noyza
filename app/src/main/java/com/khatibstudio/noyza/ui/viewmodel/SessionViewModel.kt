@@ -144,8 +144,8 @@ class SessionViewModel @Inject constructor(
                 graphSamples.add(db)
                 graphTimestamps.add(System.currentTimeMillis())
 
-                // Keep graph to 300 points max
-                if (graphSamples.size > 300) {
+                // Keep graph to 150 points max for smooth scrolling
+                if (graphSamples.size > 150) {
                     graphSamples.removeAt(0)
                     graphTimestamps.removeAt(0)
                 }
@@ -167,7 +167,9 @@ class SessionViewModel @Inject constructor(
                     stabilityPercent = stability,
                     loudTimePercent = loudTime,
                     samples = dbSamples.takeLast(100),
-                    soundCharacter = state.soundProfile.character
+                    soundCharacter = state.soundProfile.character,
+                    previousState = state.suitabilityResult.state,
+                    previousRecommendation = state.suitabilityResult.recommendation
                 )
 
                 _uiState.update { it.copy(

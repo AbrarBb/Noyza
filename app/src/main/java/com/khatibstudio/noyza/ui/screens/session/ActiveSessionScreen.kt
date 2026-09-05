@@ -303,25 +303,29 @@ fun ActiveSessionScreen(
                     }
                 } else {
                     // Active state
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         OutlinedButton(
                             onClick = { viewModel.pauseSession() },
-                            modifier = Modifier.weight(1f).height(52.dp),
-                            shape = RoundedCornerShape(14.dp)
+                            modifier = Modifier.weight(1.2f).height(52.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp)
                         ) {
-                            Icon(Icons.Outlined.Pause, contentDescription = "Pause")
-                            Spacer(Modifier.width(4.dp))
-                            Text("Pause")
+                            Icon(Icons.Outlined.Pause, contentDescription = "Pause", modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Pause", maxLines = 1, softWrap = false)
                         }
                         Button(
                             onClick = { showEndConfirm = true },
-                            modifier = Modifier.weight(2f).height(52.dp),
+                            modifier = Modifier.weight(1.8f).height(52.dp),
                             shape = RoundedCornerShape(14.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.error
                             )
                         ) {
-                            Text("End Session")
+                            Text("End Session", maxLines = 1, softWrap = false)
                         }
                     }
                 }

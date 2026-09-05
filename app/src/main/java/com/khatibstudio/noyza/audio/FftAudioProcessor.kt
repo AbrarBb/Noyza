@@ -57,12 +57,33 @@ class FftAudioProcessor(
     private val midCutoffBin = minOf(fftSize / 2, (4000f / binWidth).toInt())  // ~93
     private val highCutoffBin = minOf(fftSize / 2, (12000f / binWidth).toInt()) // ~278
 
+    // EMA smoothing state for stable spectral distribution
+    private var hasPreviousSample = false
+    private var smoothedLow = 33.3f
+    private var smoothedMid = 33.3f
+    private var smoothedHigh = 33.4f
+    private var currentCharacter = SoundCharacter.BALANCED
+    private val SPECTRAL_ALPHA = 0.15f
+
+    fun reset() {
+        hasPreviousSample = false
+        smoothedLow = 33.3f
+        smoothedMid = 33.3f
+        smoothedHigh = 33.4f
+        currentCharacter = SoundCharacter.BALANCED
+    }
+
     /**
      * Process a chunk of PCM audio samples and compute the frequency profile.
      */
     fun process(buffer: ShortArray, readCount: Int): SoundProfile {
         if (readCount < fftSize) {
-            return SoundProfile()
+            return SoundProfile(
+                lowPercent = smoothedLow,
+                midPercent = smoothedMid,
+                highPercent = smoothedHigh,
+                character = currentCharacter
+            )
         }
 
         // Windowing and loading into real buffer
@@ -99,29 +120,66 @@ class FftAudioProcessor(
 
         val totalEnergy = lowEnergy + midEnergy + highEnergy
         if (totalEnergy <= 0.0001f) {
-            return SoundProfile()
+            return SoundProfile(
+                lowPercent = smoothedLow,
+                midPercent = smoothedMid,
+                highPercent = smoothedHigh,
+                character = currentCharacter
+            )
         }
 
-        val lowPct = (lowEnergy / totalEnergy * 100f).coerceIn(0f, 100f)
-        val midPct = (midEnergy / totalEnergy * 100f).coerceIn(0f, 100f)
-        val highPct = (highEnergy / totalEnergy * 100f).coerceIn(0f, 100f)
+        val rawLow = (lowEnergy / totalEnergy * 100f).coerceIn(0f, 100f)
+        val rawMid = (midEnergy / totalEnergy * 100f).coerceIn(0f, 100f)
+        val rawHigh = (highEnergy / totalEnergy * 100f).coerceIn(0f, 100f)
 
-        val character = when {
-            midPct >= 52f -> SoundCharacter.SPEECH_HEAVY
-            lowPct >= 58f -> SoundCharacter.LOW_RUMBLE
-            highPct >= 42f -> SoundCharacter.SHARP_CLATTER
-            else -> SoundCharacter.BALANCED
+        if (!hasPreviousSample) {
+            smoothedLow = rawLow
+            smoothedMid = rawMid
+            smoothedHigh = rawHigh
+            hasPreviousSample = true
+            currentCharacter = evaluateCharacter(rawLow, rawMid, rawHigh)
+        } else {
+            // Exponential Moving Average to prevent rapid frame-by-frame flutter
+            smoothedLow = (SPECTRAL_ALPHA * rawLow) + ((1f - SPECTRAL_ALPHA) * smoothedLow)
+            smoothedMid = (SPECTRAL_ALPHA * rawMid) + ((1f - SPECTRAL_ALPHA) * smoothedMid)
+            smoothedHigh = (SPECTRAL_ALPHA * rawHigh) + ((1f - SPECTRAL_ALPHA) * smoothedHigh)
+
+            // Hysteresis thresholding for sound character to eliminate border flip-flopping
+            currentCharacter = when (currentCharacter) {
+                SoundCharacter.SPEECH_HEAVY -> {
+                    if (smoothedMid < 45f) evaluateCharacter(smoothedLow, smoothedMid, smoothedHigh)
+                    else SoundCharacter.SPEECH_HEAVY
+                }
+                SoundCharacter.LOW_RUMBLE -> {
+                    if (smoothedLow < 45f) evaluateCharacter(smoothedLow, smoothedMid, smoothedHigh)
+                    else SoundCharacter.LOW_RUMBLE
+                }
+                SoundCharacter.SHARP_CLATTER -> {
+                    if (smoothedHigh < 30f) evaluateCharacter(smoothedLow, smoothedMid, smoothedHigh)
+                    else SoundCharacter.SHARP_CLATTER
+                }
+                SoundCharacter.BALANCED -> {
+                    evaluateCharacter(smoothedLow, smoothedMid, smoothedHigh)
+                }
+            }
         }
 
         val peakFreq = peakBin * binWidth
 
         return SoundProfile(
-            lowPercent = lowPct,
-            midPercent = midPct,
-            highPercent = highPct,
-            character = character,
+            lowPercent = smoothedLow,
+            midPercent = smoothedMid,
+            highPercent = smoothedHigh,
+            character = currentCharacter,
             peakFrequencyHz = peakFreq
         )
+    }
+
+    private fun evaluateCharacter(low: Float, mid: Float, high: Float): SoundCharacter = when {
+        mid >= 50f -> SoundCharacter.SPEECH_HEAVY
+        low >= 50f -> SoundCharacter.LOW_RUMBLE
+        high >= 35f -> SoundCharacter.SHARP_CLATTER
+        else -> SoundCharacter.BALANCED
     }
 
     /**

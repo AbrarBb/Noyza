@@ -115,6 +115,9 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private var lastSuitabilityCalculationTime = 0L
+    private var smoothedSuitabilityScore: Float? = null
+
     private fun observeAudio() {
         viewModelScope.launch {
             preferences.calibrationOffset.collect { offset ->
@@ -139,19 +142,44 @@ class HomeViewModel @Inject constructor(
                 val newMin = if (state.minimumDb == Float.MAX_VALUE) db
                 else min(state.minimumDb, db)
 
-                val stability = suitabilityEngine.calculateStability(newSamples)
-                val loudTime = newSamples.count { it >= 68f } / newSamples.size.toFloat() * 100f
+                val now = System.currentTimeMillis()
+                val shouldUpdateSuitability = (now - lastSuitabilityCalculationTime) >= 500L || state.suitabilityResult.score == 0
 
-                val suitability = suitabilityEngine.calculate(
-                    activity = state.selectedActivity,
-                    averageDb = newAvg,
-                    peakDb = newPeak,
-                    minimumDb = newMin,
-                    stabilityPercent = stability,
-                    loudTimePercent = loudTime,
-                    samples = newSamples,
-                    soundCharacter = state.soundProfile.character
-                )
+                val suitability = if (shouldUpdateSuitability) {
+                    lastSuitabilityCalculationTime = now
+                    val stability = suitabilityEngine.calculateStability(newSamples)
+                    val loudTime = newSamples.count { it >= 68f } / newSamples.size.toFloat() * 100f
+
+                    val rawSuitability = suitabilityEngine.calculate(
+                        activity = state.selectedActivity,
+                        averageDb = newAvg,
+                        peakDb = newPeak,
+                        minimumDb = newMin,
+                        stabilityPercent = stability,
+                        loudTimePercent = loudTime,
+                        samples = newSamples,
+                        soundCharacter = state.soundProfile.character,
+                        previousState = state.suitabilityResult.state,
+                        previousRecommendation = state.suitabilityResult.recommendation
+                    )
+
+                    // Smooth score with EMA so transitions are gradual and calm
+                    val currentSmoothed = smoothedSuitabilityScore ?: rawSuitability.score.toFloat()
+                    val nextSmoothed = (0.25f * rawSuitability.score) + (0.75f * currentSmoothed)
+                    smoothedSuitabilityScore = nextSmoothed
+
+                    val finalScoreInt = nextSmoothed.toInt().coerceIn(0, 100)
+                    val stableState = suitabilityEngine.resolveStateWithHysteresis(finalScoreInt, state.suitabilityResult.state)
+                    val stableRecommendation = suitabilityEngine.resolveRecommendationWithHysteresis(finalScoreInt, state.suitabilityResult.recommendation)
+
+                    rawSuitability.copy(
+                        score = finalScoreInt,
+                        state = stableState,
+                        recommendation = stableRecommendation
+                    )
+                } else {
+                    state.suitabilityResult
+                }
 
                 _uiState.update { it.copy(
                     currentDb = db,
@@ -167,6 +195,8 @@ class HomeViewModel @Inject constructor(
     }
 
     fun selectActivity(activity: ActivityProfile) {
+        smoothedSuitabilityScore = null
+        lastSuitabilityCalculationTime = 0L
         _uiState.update { it.copy(selectedActivity = activity) }
         if (activity is ActivityType) {
             viewModelScope.launch {
@@ -188,6 +218,8 @@ class HomeViewModel @Inject constructor(
         checkMicPermission()
         if (!_uiState.value.hasMicPermission) return
 
+        smoothedSuitabilityScore = null
+        lastSuitabilityCalculationTime = 0L
         dbSamplesList.clear()
         measurementStartTime = System.currentTimeMillis()
         _uiState.update { it.copy(

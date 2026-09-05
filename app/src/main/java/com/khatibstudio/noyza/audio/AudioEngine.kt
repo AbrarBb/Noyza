@@ -9,10 +9,10 @@ import android.util.Log
 import androidx.annotation.RequiresPermission
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -67,18 +67,24 @@ class AudioEngine @Inject constructor(
 
     private val fftProcessor = FftAudioProcessor(sampleRate = SAMPLE_RATE, fftSize = 1024)
 
-    private val _rawDbFlow = MutableStateFlow(MIN_DB)
-    private val _smoothedDbFlow = MutableStateFlow(MIN_DB)
-    private val _soundProfileFlow = MutableStateFlow(SoundProfile())
+    private val _rawDbFlow = MutableSharedFlow<Float>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _smoothedDbFlow = MutableSharedFlow<Float>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _soundProfileFlow = MutableSharedFlow<SoundProfile>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    init {
+        _rawDbFlow.tryEmit(MIN_DB)
+        _smoothedDbFlow.tryEmit(MIN_DB)
+        _soundProfileFlow.tryEmit(SoundProfile())
+    }
 
     /** Smoothed, calibrated dB reading. Use this for UI display. */
-    val smoothedDb: Flow<Float> = _smoothedDbFlow.asStateFlow()
+    val smoothedDb: Flow<Float> = _smoothedDbFlow.asSharedFlow()
 
     /** Raw (unsmoothed) dB reading. Useful for peak detection. */
-    val rawDb: Flow<Float> = _rawDbFlow.asStateFlow()
+    val rawDb: Flow<Float> = _rawDbFlow.asSharedFlow()
 
     /** Real-time frequency band analysis & sound character classification. */
-    val soundProfile: Flow<SoundProfile> = _soundProfileFlow.asStateFlow()
+    val soundProfile: Flow<SoundProfile> = _soundProfileFlow.asSharedFlow()
 
     private var smoothedValue = MIN_DB
     private var calibrationOffset = 0f
@@ -139,12 +145,12 @@ class AudioEngine @Inject constructor(
                     val calibratedSmoothed = (smoothedValue + calibrationOffset).coerceIn(MIN_DB, MAX_DB)
                     val calibratedRaw = (clampedRaw + calibrationOffset).coerceIn(MIN_DB, MAX_DB)
 
-                    _rawDbFlow.value = calibratedRaw
-                    _smoothedDbFlow.value = calibratedSmoothed
+                    _rawDbFlow.tryEmit(calibratedRaw)
+                    _smoothedDbFlow.tryEmit(calibratedSmoothed)
 
                     // Run FFT spectral analysis
                     val profile = fftProcessor.process(buffer, readCount)
-                    _soundProfileFlow.value = profile
+                    _soundProfileFlow.tryEmit(profile)
                 }
             }
         } catch (e: SecurityException) {
@@ -163,10 +169,11 @@ class AudioEngine @Inject constructor(
     fun stopCapture() {
         isRecording = false
         releaseAudioRecord()
+        fftProcessor.reset()
         // Reset to floor value
-        _smoothedDbFlow.value = MIN_DB
-        _rawDbFlow.value = MIN_DB
-        _soundProfileFlow.value = SoundProfile()
+        _smoothedDbFlow.tryEmit(MIN_DB)
+        _rawDbFlow.tryEmit(MIN_DB)
+        _soundProfileFlow.tryEmit(SoundProfile())
         smoothedValue = MIN_DB
     }
 

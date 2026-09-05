@@ -124,20 +124,23 @@ fun HomeScreen(
 
         // ─── Recommendation Card ──────────────────────────────────────────
         item {
+            Spacer(Modifier.height(8.dp))
             RecommendationCard(result = uiState.suitabilityResult)
         }
 
         // ─── Ideal Range Info ─────────────────────────────────────────────
         item {
+            Spacer(Modifier.height(8.dp))
             IdealRangeCard(activity = uiState.selectedActivity)
         }
 
         // ─── Primary Actions ──────────────────────────────────────────────
         item {
+            Spacer(Modifier.height(16.dp))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
@@ -172,6 +175,7 @@ fun HomeScreen(
                     )
                 }
             }
+            Spacer(Modifier.height(16.dp))
         }
 
         // ─── Recent Sessions ──────────────────────────────────────────────

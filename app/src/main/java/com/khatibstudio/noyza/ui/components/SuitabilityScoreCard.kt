@@ -34,11 +34,12 @@ fun SuitabilityScoreCard(
 ) {
     val animatedScore by animateIntAsState(
         targetValue = result.score,
-        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
         label = "score_animation"
     )
 
-    val scoreColor = scoreStateColor(result.state)
+    val displayState = SuitabilityState.fromScore(animatedScore)
+    val scoreColor = scoreStateColor(displayState)
 
     Card(
         modifier = modifier
@@ -92,7 +93,7 @@ fun SuitabilityScoreCard(
 
             // State label
             Text(
-                text = result.state.label,
+                text = displayState.label,
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = scoreColor

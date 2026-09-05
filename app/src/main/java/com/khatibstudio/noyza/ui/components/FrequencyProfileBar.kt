@@ -150,21 +150,25 @@ fun FrequencyProfileBar(
             // Band breakdown percentages
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 BandIndicator(
                     color = lowColor,
                     label = "Low (HVAC)",
+                    shortLabel = "Low",
                     percent = soundProfile.lowPercent.toInt()
                 )
                 BandIndicator(
                     color = midColor,
                     label = "Mid (Speech)",
+                    shortLabel = "Mid",
                     percent = soundProfile.midPercent.toInt()
                 )
                 BandIndicator(
                     color = highColor,
                     label = "High (Clatter)",
+                    shortLabel = "High",
                     percent = soundProfile.highPercent.toInt()
                 )
             }
@@ -176,6 +180,7 @@ fun FrequencyProfileBar(
 private fun BandIndicator(
     color: Color,
     label: String,
+    shortLabel: String,
     percent: Int
 ) {
     Row(
@@ -189,8 +194,11 @@ private fun BandIndicator(
                 .background(color)
         )
         Text(
-            "$label $percent%",
-            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+            text = "$shortLabel $percent%",
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         )
     }
 }
