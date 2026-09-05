@@ -52,3 +52,6 @@ captures/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# AdMob verification (local only, do not push to git)
+app-ads.txt

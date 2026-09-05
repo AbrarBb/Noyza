@@ -231,9 +231,7 @@ class HomeViewModel @Inject constructor(
             durationSeconds = 0L
         )}
 
-        viewModelScope.launch(Dispatchers.IO) {
-            audioEngine.startCapture()
-        }
+        audioEngine.startCapture("home")
 
         timerJob = viewModelScope.launch {
             while (_uiState.value.isActive) {
@@ -246,7 +244,7 @@ class HomeViewModel @Inject constructor(
 
     fun stopLiveMonitoring() {
         timerJob?.cancel()
-        audioEngine.stopCapture()
+        audioEngine.stopCapture("home")
         _uiState.update { it.copy(isActive = false) }
     }
 
@@ -262,13 +260,13 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(isActive = true) }
 
         quickMeasureJob = viewModelScope.launch {
-            launch(Dispatchers.IO) { audioEngine.startCapture() }
+            audioEngine.startCapture("quick_measure")
 
             audioEngine.smoothedDb
                 .take(150) // ~15 seconds at ~10 samples/sec
                 .collect { db -> samples.add(db) }
 
-            audioEngine.stopCapture()
+            audioEngine.stopCapture("quick_measure")
             _uiState.update { it.copy(isActive = false) }
 
             if (samples.isNotEmpty()) {
@@ -295,7 +293,7 @@ class HomeViewModel @Inject constructor(
 
     fun cancelQuickMeasure() {
         quickMeasureJob?.cancel()
-        audioEngine.stopCapture()
+        audioEngine.stopCapture("quick_measure")
         _uiState.update { it.copy(isActive = false) }
     }
 
@@ -311,7 +309,7 @@ class HomeViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        audioEngine.stopCapture()
+        audioEngine.stopCapture("home")
         timerJob?.cancel()
         quickMeasureJob?.cancel()
     }

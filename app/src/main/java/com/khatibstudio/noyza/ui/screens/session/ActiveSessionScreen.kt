@@ -231,15 +231,14 @@ fun ActiveSessionScreen(
                 Spacer(Modifier.height(16.dp))
 
                 // Live graph
-                if (uiState.dbHistory.isNotEmpty()) {
-                    SessionLiveGraph(
-                        samples = uiState.dbHistory,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(140.dp)
-                            .padding(horizontal = 16.dp)
-                    )
-                }
+                SessionLiveGraph(
+                    samples = uiState.dbHistory,
+                    isLive = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .padding(horizontal = 16.dp)
+                )
 
                 Spacer(Modifier.height(16.dp))
 

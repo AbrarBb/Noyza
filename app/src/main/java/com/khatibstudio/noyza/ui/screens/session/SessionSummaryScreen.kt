@@ -198,6 +198,7 @@ fun SessionSummaryScreen(
                         Spacer(Modifier.height(12.dp))
                         SessionLiveGraph(
                             samples = uiState.samples,
+                            isLive = false,
                             modifier = Modifier.fillMaxWidth().height(160.dp)
                         )
                     }

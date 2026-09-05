@@ -124,30 +124,37 @@ class SessionViewModel @Inject constructor(
         }
     }
 
+    private var lastSuitabilityCalcTime = 0L
+    private var lastGraphTime = 0L
+
     private fun startCapture() {
+        audioEngine.startCapture("session")
+
         captureJob?.cancel()
-        captureJob = viewModelScope.launch(Dispatchers.IO) {
-            audioEngine.startCapture()
-        }
-
-        viewModelScope.launch {
-            audioEngine.soundProfile.collect { profile ->
-                _uiState.update { it.copy(soundProfile = profile) }
+        captureJob = viewModelScope.launch {
+            launch {
+                audioEngine.soundProfile.collect { profile ->
+                    _uiState.update { it.copy(soundProfile = profile) }
+                }
             }
-        }
 
-        viewModelScope.launch {
             audioEngine.smoothedDb.collect { db ->
                 if (!_uiState.value.isRunning || _uiState.value.isPaused) return@collect
 
+                val now = System.currentTimeMillis()
                 dbSamples.add(db)
-                graphSamples.add(db)
-                graphTimestamps.add(System.currentTimeMillis())
 
-                // Keep graph to 150 points max for smooth scrolling
-                if (graphSamples.size > 150) {
-                    graphSamples.removeAt(0)
-                    graphTimestamps.removeAt(0)
+                // Feed graph at smooth ~10Hz cadence (every 100ms = 12s rolling window on 120-point graph)
+                var updatedGraph = false
+                if (now - lastGraphTime >= 100L || graphSamples.isEmpty()) {
+                    lastGraphTime = now
+                    graphSamples.add(db)
+                    graphTimestamps.add(now)
+                    if (graphSamples.size > 150) {
+                        graphSamples.removeAt(0)
+                        graphTimestamps.removeAt(0)
+                    }
+                    updatedGraph = true
                 }
 
                 val state = _uiState.value
@@ -159,18 +166,24 @@ class SessionViewModel @Inject constructor(
                 val stability = suitabilityEngine.calculateStability(dbSamples.takeLast(50))
                 val loudTime = dbSamples.count { it >= 68f } / dbSamples.size.toFloat() * 100f
 
-                val suitability = suitabilityEngine.calculate(
-                    activity = state.activity,
-                    averageDb = newAvg,
-                    peakDb = newPeak,
-                    minimumDb = newMin,
-                    stabilityPercent = stability,
-                    loudTimePercent = loudTime,
-                    samples = dbSamples.takeLast(100),
-                    soundCharacter = state.soundProfile.character,
-                    previousState = state.suitabilityResult.state,
-                    previousRecommendation = state.suitabilityResult.recommendation
-                )
+                // Damp suitability calculation to 500ms intervals to eliminate score flicker
+                val suitability = if (now - lastSuitabilityCalcTime >= 500L || state.suitabilityResult.score == 0) {
+                    lastSuitabilityCalcTime = now
+                    suitabilityEngine.calculate(
+                        activity = state.activity,
+                        averageDb = newAvg,
+                        peakDb = newPeak,
+                        minimumDb = newMin,
+                        stabilityPercent = stability,
+                        loudTimePercent = loudTime,
+                        samples = dbSamples.takeLast(100),
+                        soundCharacter = state.soundProfile.character,
+                        previousState = state.suitabilityResult.state,
+                        previousRecommendation = state.suitabilityResult.recommendation
+                    )
+                } else {
+                    state.suitabilityResult
+                }
 
                 _uiState.update { it.copy(
                     currentDb = db,
@@ -180,8 +193,8 @@ class SessionViewModel @Inject constructor(
                     noiseLevel = NoiseLevel.fromDb(db),
                     suitabilityResult = suitability,
                     stabilityPercent = stability,
-                    dbHistory = graphSamples.toList(),
-                    timeHistory = graphTimestamps.toList()
+                    dbHistory = if (updatedGraph) graphSamples.toList() else it.dbHistory,
+                    timeHistory = if (updatedGraph) graphTimestamps.toList() else it.timeHistory
                 )}
 
                 checkHighNoiseAlert(db, suitability.score)
@@ -204,7 +217,7 @@ class SessionViewModel @Inject constructor(
     fun pauseSession() {
         savedSeconds = _uiState.value.durationSeconds
         timerJob?.cancel()
-        audioEngine.stopCapture()
+        audioEngine.stopCapture("session")
         captureJob?.cancel()
         _uiState.update { it.copy(isPaused = true) }
     }
@@ -217,7 +230,7 @@ class SessionViewModel @Inject constructor(
 
     suspend fun endSession(): Long {
         timerJob?.cancel()
-        audioEngine.stopCapture()
+        audioEngine.stopCapture("session")
         captureJob?.cancel()
 
         val state = _uiState.value
@@ -308,7 +321,7 @@ class SessionViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        audioEngine.stopCapture()
+        audioEngine.stopCapture("session")
         captureJob?.cancel()
         timerJob?.cancel()
     }

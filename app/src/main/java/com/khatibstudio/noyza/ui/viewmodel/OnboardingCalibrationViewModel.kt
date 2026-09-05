@@ -50,9 +50,7 @@ class OnboardingCalibrationViewModel @Inject constructor(
             _state.update { it.copy(isSampling = true, sampleProgress = 0f) }
             val samples = mutableListOf<Float>()
 
-            val captureJob = launch {
-                audioEngine.startCapture()
-            }
+            audioEngine.startCapture("calibration")
 
             val collectJob = launch {
                 audioEngine.smoothedDb.collect { db ->
@@ -71,8 +69,7 @@ class OnboardingCalibrationViewModel @Inject constructor(
             }
 
             collectJob.cancel()
-            audioEngine.stopCapture()
-            captureJob.cancel()
+            audioEngine.stopCapture("calibration")
 
             val avgDb = if (samples.isNotEmpty()) samples.average().toFloat() else 42f
             _state.update {
@@ -91,7 +88,7 @@ class OnboardingCalibrationViewModel @Inject constructor(
 
     fun saveCalibrationAndFinish(onDone: () -> Unit) {
         viewModelScope.launch {
-            audioEngine.stopCapture()
+            audioEngine.stopCapture("calibration")
             preferences.setCalibrationOffset(_state.value.selectedOffset)
             onDone()
         }
@@ -99,6 +96,6 @@ class OnboardingCalibrationViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        audioEngine.stopCapture()
+        audioEngine.stopCapture("calibration")
     }
 }

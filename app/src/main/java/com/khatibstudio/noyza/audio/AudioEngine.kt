@@ -8,12 +8,11 @@ import android.media.MediaRecorder
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
@@ -97,22 +96,38 @@ class AudioEngine @Inject constructor(
         calibrationOffset = offset.coerceIn(MIN_CALIBRATION_OFFSET, MAX_CALIBRATION_OFFSET)
     }
 
+    private val engineScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
+    private val activeClients = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+    private val captureLock = Any()
+    private var captureJob: kotlinx.coroutines.Job? = null
+
     /**
      * Start capturing audio from the microphone.
-     * Must be called from a coroutine. Runs on IO dispatcher.
+     * Uses client tagging so navigation transitions or multiple concurrent callers
+     * (e.g. HomeScreen -> ActiveSessionScreen) do not terminate recording.
      * Requires RECORD_AUDIO permission.
      */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    suspend fun startCapture() = withContext(Dispatchers.IO) {
-        if (isRecording) return@withContext
+    fun startCapture(clientTag: String = "default") {
+        synchronized(captureLock) {
+            activeClients.add(clientTag)
+            if (captureJob == null || captureJob?.isActive != true) {
+                captureJob = engineScope.launch {
+                    runCaptureLoop()
+                }
+            }
+        }
+    }
 
-        val bufferSize = max(
-            AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT),
-            4096
-        )
-
+    private suspend fun runCaptureLoop() = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        var record: AudioRecord? = null
         try {
-            audioRecord = AudioRecord(
+            val bufferSize = max(
+                AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT),
+                4096
+            )
+
+            record = AudioRecord(
                 MediaRecorder.AudioSource.MIC,
                 SAMPLE_RATE,
                 CHANNEL_CONFIG,
@@ -120,18 +135,23 @@ class AudioEngine @Inject constructor(
                 bufferSize
             )
 
-            if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
+            if (record.state != AudioRecord.STATE_INITIALIZED) {
                 Log.e(TAG, "AudioRecord failed to initialize")
+                record.release()
                 return@withContext
             }
 
-            audioRecord?.startRecording()
-            isRecording = true
+            synchronized(captureLock) {
+                audioRecord = record
+                isRecording = true
+            }
+
+            record.startRecording()
 
             val buffer = ShortArray(bufferSize / 2)
 
-            while (isRecording) {
-                val readCount = audioRecord?.read(buffer, 0, buffer.size) ?: 0
+            while (coroutineContext.isActive && isRecording && activeClients.isNotEmpty()) {
+                val readCount = record.read(buffer, 0, buffer.size)
 
                 if (readCount > 0) {
                     val rms = calculateRms(buffer, readCount)
@@ -151,30 +171,56 @@ class AudioEngine @Inject constructor(
                     // Run FFT spectral analysis
                     val profile = fftProcessor.process(buffer, readCount)
                     _soundProfileFlow.tryEmit(profile)
+                } else if (readCount < 0) {
+                    Log.w(TAG, "AudioRecord read returned error code: $readCount")
+                    kotlinx.coroutines.delay(50)
                 }
             }
         } catch (e: SecurityException) {
             Log.e(TAG, "Missing RECORD_AUDIO permission", e)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            // Normal coroutine cancellation
         } catch (e: Exception) {
             Log.e(TAG, "Audio capture error", e)
         } finally {
-            releaseAudioRecord()
+            synchronized(captureLock) {
+                isRecording = false
+                try {
+                    record?.stop()
+                    record?.release()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error releasing AudioRecord", e)
+                }
+                if (audioRecord === record) {
+                    audioRecord = null
+                }
+            }
+            fftProcessor.reset()
+            _smoothedDbFlow.tryEmit(MIN_DB)
+            _rawDbFlow.tryEmit(MIN_DB)
+            _soundProfileFlow.tryEmit(SoundProfile())
+            smoothedValue = MIN_DB
         }
     }
 
     /**
-     * Stop audio capture and release microphone immediately.
-     * Call this when session ends or app goes to background.
+     * Stop audio capture for a specific client.
+     * If clientTag is null, stops all clients and releases microphone immediately.
+     * Microphone is only released when NO active clients remain.
      */
-    fun stopCapture() {
-        isRecording = false
-        releaseAudioRecord()
-        fftProcessor.reset()
-        // Reset to floor value
-        _smoothedDbFlow.tryEmit(MIN_DB)
-        _rawDbFlow.tryEmit(MIN_DB)
-        _soundProfileFlow.tryEmit(SoundProfile())
-        smoothedValue = MIN_DB
+    fun stopCapture(clientTag: String? = null) {
+        synchronized(captureLock) {
+            if (clientTag == null) {
+                activeClients.clear()
+            } else {
+                activeClients.remove(clientTag)
+            }
+            if (activeClients.isEmpty()) {
+                isRecording = false
+                captureJob?.cancel()
+                captureJob = null
+            }
+        }
     }
 
     private fun releaseAudioRecord() {
