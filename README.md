@@ -1,7 +1,7 @@
 # Noyza — Smart Environment & Noise Suitability Assistant
 
 <p align="center">
-  <img src="app/src/main/res/drawable/ic_launcher_foreground.xml" width="120" height="120" alt="Noyza Logo" />
+  <img src="noyza_logo.png" width="120" height="120" alt="Noyza Logo" />
 </p>
 
 <p align="center">
